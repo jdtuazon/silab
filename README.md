@@ -52,7 +52,7 @@ silab/
 5. Update `.env` with your MongoDB Atlas connection string:
    ```
    MONGODB_URL=mongodb+srv://username:password@cluster0.mongodb.net/?retryWrites=true&w=majority
-   DB_NAME=datawave
+   DB_NAME=silab
    ```
 
 6. Start the FastAPI server:
