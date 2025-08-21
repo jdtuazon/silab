@@ -1,6 +1,6 @@
 # DataWave SiLab
 
-A full-stack application with Next.js frontend, FastAPI backend, and MongoDB Atlas database.
+A full-stack application with Next.js frontend, FastAPI backend, and MongoDB Atlas database featuring a product management dashboard.
 
 ## Project Structure
 
@@ -13,7 +13,7 @@ silab/
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 with TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 with TypeScript, Tailwind CSS, Lucide React icons
 - **Backend**: FastAPI with Python
 - **Database**: MongoDB Atlas
 - **Development**: Hot reload for both frontend and backend
@@ -81,10 +81,26 @@ silab/
 
    The frontend will be available at http://localhost:3000
 
+## Application Features
+
+### Frontend Routes
+- **Home** (`/`) - Health check and system status
+- **Products Dashboard** (`/products`) - Main product management interface
+
+### Products Dashboard Features
+- **Search**: Real-time search across product names, categories, and tags
+- **Status Filtering**: Filter by development status (in-dev, qa, prod, archived)
+- **Tag Filtering**: Multiple tag selection with visual indicators
+- **Responsive Design**: Mobile-friendly with collapsible sidebar
+- **Grid Layout**: Clean card-based product display
+
 ## API Endpoints
 
 - `GET /` - Welcome message
 - `GET /health` - Health check endpoint
+- `GET /test-data` - Retrieve test data from MongoDB
+- `POST /test-data` - Create random test data
+- `GET /db-status` - Check MongoDB connection and list collections
 
 ## Environment Variables
 
