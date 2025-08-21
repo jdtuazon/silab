@@ -36,7 +36,7 @@ export function Header({ searchValue, onSearchChange, onMenuToggle }: HeaderProp
               placeholder="Search products..."
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 pr-4 py-2 w-80 max-w-xs border-0 bg-white/90 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:bg-white shadow-lg placeholder-neutral-500"
+              className="pl-10 pr-4 py-2 w-80 max-w-xs border-0 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white shadow-lg placeholder-neutral-500 text-neutral-900"
               aria-label="Search products"
             />
           </div>
