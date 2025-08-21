@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
@@ -9,24 +10,32 @@ import random
 
 load_dotenv()
 
-app = FastAPI(title="SiLab API", version="1.0.0")
+
+# Lifespan context manager for startup and shutdown events
+@asynccontextmanager
+async def lifespan(app):
+    app.mongodb_client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
+    app.mongodb = app.mongodb_client[os.getenv("DB_NAME", "silab")]
+    try:
+        yield
+    finally:
+        app.mongodb_client.close()
+
+app = FastAPI(title="SiLab API", version="1.0.0", lifespan=lifespan)
+
+
+# Get allowed origins from environment variable, default to localhost for dev
+origins_env = os.getenv("FRONTEND_ORIGINS", "http://localhost:3000,http://localhost:3001")
+allow_origins = [origin.strip() for origin in origins_env.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup_db_client():
-    app.mongodb_client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-    app.mongodb = app.mongodb_client[os.getenv("DB_NAME", "silab")]
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    app.mongodb_client.close()
 
 @app.get("/")
 async def root():
@@ -85,7 +94,7 @@ async def check_db_connection():
         collections = await app.mongodb.list_collection_names()
         return {
             "status": "connected",
-            "database": os.getenv("DB_NAME", "datawave"),
+            "database": os.getenv("DB_NAME", "silab"),
             "collections": collections
         }
     except Exception as e:
