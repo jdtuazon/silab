@@ -9,7 +9,7 @@ import random
 
 load_dotenv()
 
-app = FastAPI(title="DataWave API", version="1.0.0")
+app = FastAPI(title="SiLab API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +22,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_db_client():
     app.mongodb_client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-    app.mongodb = app.mongodb_client[os.getenv("DB_NAME", "datawave")]
+    app.mongodb = app.mongodb_client[os.getenv("DB_NAME", "silab")]
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -30,7 +30,7 @@ async def shutdown_db_client():
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to DataWave API"}
+    return {"message": "Welcome to SiLab API"}
 
 @app.get("/health")
 async def health_check():
@@ -93,4 +93,5 @@ async def check_db_connection():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
