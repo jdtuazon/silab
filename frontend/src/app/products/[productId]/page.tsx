@@ -239,42 +239,6 @@ export default function ProductDashboard({ params }: ProductDashboardProps) {
                   </div>
                 )}
               </div>
-
-              {/* Right-Side Utility Panel */}
-              <div className="w-80 flex-shrink-0">
-                <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-4">
-                  <h3 className="text-sm font-semibold text-muted-text uppercase tracking-wider mb-4">
-                    Context & Tips
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="p-3 bg-primary-light rounded-lg">
-                      <h4 className="font-medium text-primary mb-2">
-                        Quick Tip
-                      </h4>
-                      <p className="text-sm text-primary">
-                        Use the similarity scores to identify successful
-                        patterns from competitors.
-                      </p>
-                    </div>
-                    <div className="p-3 bg-neutral-50 rounded-lg">
-                      <h4 className="font-medium text-primary-text mb-2">
-                        Export Options
-                      </h4>
-                      <div className="space-y-2">
-                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
-                          Export to PDF
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
-                          Export to CSV
-                        </button>
-                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
-                          Share Report
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

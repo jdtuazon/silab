@@ -197,22 +197,22 @@ export function SiLabInsights({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-4">
-            <div className="p-4 bg-success-light rounded-lg">
+            <div className="p-4 bg-white border-2 border-success rounded-lg shadow-sm">
               <h4 className="font-medium text-success-text mb-3 flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Strengths
               </h4>
-              <ul className="space-y-2 text-sm text-success-text">
+              <ul className="space-y-3">
                 {swotAnalysis.strengths.map((strength, index) => (
                   <li key={index} className="flex items-start">
-                    <CheckCircle className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-success mr-3 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <span>{strength.item}</span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-primary-text font-medium">
+                        {strength.item}
+                      </span>
+                      <div className="flex items-center gap-3 mt-1">
                         <span
-                          className={`text-xs font-medium ${getImpactColor(
-                            strength.impact
-                          )}`}
+                          className={`text-xs px-2 py-1 rounded-full bg-success-light text-success-text font-medium`}
                         >
                           {strength.impact} Impact
                         </span>
@@ -225,22 +225,22 @@ export function SiLabInsights({
                 ))}
               </ul>
             </div>
-            <div className="p-4 bg-error-light rounded-lg">
+            <div className="p-4 bg-white border-2 border-error rounded-lg shadow-sm">
               <h4 className="font-medium text-error-text mb-3 flex items-center">
                 <TrendingDown className="w-4 h-4 mr-2" />
                 Weaknesses
               </h4>
-              <ul className="space-y-2 text-sm text-error-text">
+              <ul className="space-y-3">
                 {swotAnalysis.weaknesses.map((weakness, index) => (
                   <li key={index} className="flex items-start">
-                    <XCircle className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
+                    <XCircle className="w-4 h-4 text-error mr-3 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <span>{weakness.item}</span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-primary-text font-medium">
+                        {weakness.item}
+                      </span>
+                      <div className="flex items-center gap-3 mt-1">
                         <span
-                          className={`text-xs font-medium ${getImpactColor(
-                            weakness.impact
-                          )}`}
+                          className={`text-xs px-2 py-1 rounded-full bg-error-light text-error-text font-medium`}
                         >
                           {weakness.impact} Impact
                         </span>
@@ -255,22 +255,22 @@ export function SiLabInsights({
             </div>
           </div>
           <div className="space-y-4">
-            <div className="p-4 bg-primary-light rounded-lg">
+            <div className="p-4 bg-white border-2 border-primary rounded-lg shadow-sm">
               <h4 className="font-medium text-primary mb-3 flex items-center">
                 <Target className="w-4 h-4 mr-2" />
                 Opportunities
               </h4>
-              <ul className="space-y-2 text-sm text-primary">
+              <ul className="space-y-3">
                 {swotAnalysis.opportunities.map((opportunity, index) => (
                   <li key={index} className="flex items-start">
-                    <ArrowRight className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-primary mr-3 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <span>{opportunity.item}</span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-primary-text font-medium">
+                        {opportunity.item}
+                      </span>
+                      <div className="flex items-center gap-3 mt-1">
                         <span
-                          className={`text-xs font-medium ${getImpactColor(
-                            opportunity.impact
-                          )}`}
+                          className={`text-xs px-2 py-1 rounded-full bg-primary-light text-primary font-medium`}
                         >
                           {opportunity.impact} Impact
                         </span>
@@ -283,22 +283,22 @@ export function SiLabInsights({
                 ))}
               </ul>
             </div>
-            <div className="p-4 bg-warning-light rounded-lg">
+            <div className="p-4 bg-white border-2 border-warning rounded-lg shadow-sm">
               <h4 className="font-medium text-warning-text mb-3 flex items-center">
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Threats
               </h4>
-              <ul className="space-y-2 text-sm text-warning-text">
+              <ul className="space-y-3">
                 {swotAnalysis.threats.map((threat, index) => (
                   <li key={index} className="flex items-start">
-                    <AlertCircle className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-warning mr-3 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <span>{threat.item}</span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-primary-text font-medium">
+                        {threat.item}
+                      </span>
+                      <div className="flex items-center gap-3 mt-1">
                         <span
-                          className={`text-xs font-medium ${getImpactColor(
-                            threat.impact
-                          )}`}
+                          className={`text-xs px-2 py-1 rounded-full bg-warning-light text-warning-text font-medium`}
                         >
                           {threat.impact} Impact
                         </span>

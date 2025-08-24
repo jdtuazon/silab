@@ -16,6 +16,18 @@ import {
   Target,
   Copy,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  ArrowRight,
+  Star,
+  Clock,
+  Users,
+  BarChart3,
+  Lightbulb,
+  ThumbsUp,
+  ThumbsDown,
+  XCircle,
 } from "lucide-react";
 
 interface SimilarProductsProps {
@@ -23,6 +35,7 @@ interface SimilarProductsProps {
 }
 
 export function SimilarProducts({ product }: SimilarProductsProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [searchValue, setSearchValue] = useState("");
   const [sortBy, setSortBy] = useState("similarity");
 
@@ -38,6 +51,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "successful" as const,
       overview:
         "High-performing credit card with strong customer adoption and positive reviews.",
+      features: [
+        "2% cashback on all purchases",
+        "No annual fee first year",
+        "Travel insurance included",
+      ],
+      pricing: "$95 annual fee after first year",
+      targetAudience: "Young professionals, frequent travelers",
+      marketShare: "12% of credit card market",
+      customerRating: 4.6,
+      reviewCount: 1247,
+      adjustInsights: [
+        "High annual fee deterred price-sensitive customers",
+        "Complex reward structure confused users",
+        "Limited mobile app features reduced adoption",
+      ],
+      imitateInsights: [
+        "Strong brand recognition and trust",
+        "Excellent customer service and support",
+        "Comprehensive travel benefits package",
+      ],
     },
     {
       id: "2",
@@ -49,6 +82,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "failed" as const,
       overview:
         "Faced challenges with customer acquisition and high default rates.",
+      features: [
+        "Same-day approval",
+        "No collateral required",
+        "Flexible repayment terms",
+      ],
+      pricing: "APR 8.99% - 24.99%",
+      targetAudience: "Individuals with good credit, emergency funding needs",
+      marketShare: "3% of personal loan market",
+      customerRating: 3.2,
+      reviewCount: 892,
+      adjustInsights: [
+        "Aggressive marketing led to poor customer expectations",
+        "Insufficient credit assessment resulted in high defaults",
+        "Lack of financial education resources",
+      ],
+      imitateInsights: [
+        "Fast application process and approval",
+        "Transparent fee structure",
+        "Multiple repayment options",
+      ],
     },
     {
       id: "3",
@@ -60,6 +113,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "successful" as const,
       overview:
         "Successful community-focused lending with strong repayment rates.",
+      features: [
+        "Group lending model",
+        "Financial literacy training",
+        "Community support",
+      ],
+      pricing: "Interest rates 15-25% annually",
+      targetAudience: "Underserved communities, small entrepreneurs",
+      marketShare: "8% of microfinance market",
+      customerRating: 4.8,
+      reviewCount: 2156,
+      adjustInsights: [
+        "Limited digital presence restricted growth",
+        "Manual processes increased operational costs",
+        "Geographic limitations reduced scalability",
+      ],
+      imitateInsights: [
+        "Strong community engagement and trust",
+        "Comprehensive financial education programs",
+        "Flexible repayment schedules",
+      ],
     },
     {
       id: "4",
@@ -71,6 +144,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "successful" as const,
       overview:
         "Market leader with excellent customer satisfaction and retention.",
+      features: [
+        "AI-powered fraud detection",
+        "Real-time spending insights",
+        "Global acceptance",
+      ],
+      pricing: "$150 annual fee",
+      targetAudience: "High-net-worth individuals, business travelers",
+      marketShare: "18% of premium credit card market",
+      customerRating: 4.7,
+      reviewCount: 3421,
+      adjustInsights: [
+        "High annual fee limited mass market appeal",
+        "Complex feature set overwhelmed some users",
+        "Exclusive targeting alienated broader audience",
+      ],
+      imitateInsights: [
+        "Cutting-edge technology and security",
+        "Exceptional customer experience",
+        "Strong brand positioning and marketing",
+      ],
     },
     {
       id: "5",
@@ -82,6 +175,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "failed" as const,
       overview:
         "Struggled with regulatory compliance and operational challenges.",
+      features: [
+        "Lowest rates in market",
+        "Quick online application",
+        "No hidden fees",
+      ],
+      pricing: "APR 5.99% - 18.99%",
+      targetAudience: "Startups, small businesses, entrepreneurs",
+      marketShare: "2% of business loan market",
+      customerRating: 3.8,
+      reviewCount: 567,
+      adjustInsights: [
+        "Insufficient regulatory compliance framework",
+        "Underestimated operational complexity",
+        "Poor risk management led to high losses",
+      ],
+      imitateInsights: [
+        "Competitive pricing strategy",
+        "Streamlined application process",
+        "Transparent fee structure",
+      ],
     },
     {
       id: "6",
@@ -93,6 +206,26 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
       status: "successful" as const,
       overview:
         "Steady performer with loyal customer base and consistent growth.",
+      features: [
+        "High-yield savings rates",
+        "FDIC insurance",
+        "Mobile banking",
+      ],
+      pricing: "No monthly fees, 2.5% APY",
+      targetAudience: "Conservative savers, families, retirees",
+      marketShare: "15% of savings account market",
+      customerRating: 4.4,
+      reviewCount: 1893,
+      adjustInsights: [
+        "Limited digital features compared to fintech",
+        "Branch-heavy model increased costs",
+        "Conservative approach limited innovation",
+      ],
+      imitateInsights: [
+        "Strong trust and brand recognition",
+        "Comprehensive financial services",
+        "Excellent customer service and support",
+      ],
     },
   ];
 
@@ -117,6 +250,35 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
         return 0;
     }
   });
+
+  const currentProduct = sortedProducts[currentIndex];
+
+  const nextProduct = () => {
+    setCurrentIndex((prev) => (prev + 1) % sortedProducts.length);
+  };
+
+  const prevProduct = () => {
+    setCurrentIndex(
+      (prev) => (prev - 1 + sortedProducts.length) % sortedProducts.length
+    );
+  };
+
+  const goToProduct = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  if (!currentProduct) {
+    return (
+      <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-8 text-center">
+        <h3 className="text-lg font-semibold text-primary-text mb-2">
+          No Similar Products Found
+        </h3>
+        <p className="text-secondary-text">
+          Try adjusting your search criteria.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,160 +312,209 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
         </div>
       </div>
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedProducts.map((similarProduct) => (
-          <div
-            key={similarProduct.id}
-            className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-6"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h4 className="font-semibold text-primary-text">
-                  {similarProduct.name}
-                </h4>
-                <p className="text-sm text-muted-text flex items-center">
-                  <Building className="w-3 h-3 mr-1" />
-                  {similarProduct.company}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-primary">
-                  {similarProduct.similarity}%
-                </div>
-                <div className="text-xs text-muted-text">Similarity</div>
-              </div>
-            </div>
-            <p className="text-sm text-secondary-text mb-3">
-              {similarProduct.description}
-            </p>
-            <div className="flex items-center justify-between text-xs text-muted-text mb-3">
-              <span className="flex items-center">
-                <Calendar className="w-3 h-3 mr-1" />
-                Released: {similarProduct.dateReleased}
-              </span>
+      {/* Carousel Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={prevProduct}
+          className="p-2 text-muted-text hover:text-primary transition-colors disabled:opacity-50"
+          disabled={sortedProducts.length <= 1}
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          {sortedProducts.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToProduct(index)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentIndex ? "bg-primary" : "bg-neutral-300"
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={nextProduct}
+          className="p-2 text-muted-text hover:text-primary transition-colors disabled:opacity-50"
+          disabled={sortedProducts.length <= 1}
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Main Product Card */}
+      <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-8">
+        {/* Product Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-2xl font-bold text-primary-text">
+                {currentProduct.name}
+              </h2>
               <span
-                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  similarProduct.status === "successful"
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  currentProduct.status === "successful"
                     ? "bg-success-light text-success-text"
                     : "bg-error-light text-error-text"
                 }`}
               >
-                {similarProduct.status === "successful" ? (
-                  <CheckCircle className="w-3 h-3 mr-1" />
+                {currentProduct.status === "successful" ? (
+                  <CheckCircle className="w-4 h-4 mr-1" />
                 ) : (
-                  <AlertCircle className="w-3 h-3 mr-1" />
+                  <AlertCircle className="w-4 h-4 mr-1" />
                 )}
-                {similarProduct.status === "successful"
+                {currentProduct.status === "successful"
                   ? "Successful"
                   : "Failed"}
               </span>
             </div>
-            <p className="text-xs text-secondary-text mb-3">
-              {similarProduct.overview}
+            <p className="text-lg text-secondary-text mb-3">
+              {currentProduct.description}
             </p>
-            <div className="w-full bg-neutral-200 rounded-full h-2">
+            <div className="flex items-center gap-4 text-sm text-muted-text">
+              <span className="flex items-center">
+                <Building className="w-4 h-4 mr-1" />
+                {currentProduct.company}
+              </span>
+              <span className="flex items-center">
+                <Calendar className="w-4 h-4 mr-1" />
+                Released: {currentProduct.dateReleased}
+              </span>
+              <span className="flex items-center">
+                <Star className="w-4 h-4 mr-1" />
+                {currentProduct.customerRating} ({currentProduct.reviewCount}{" "}
+                reviews)
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-primary mb-1">
+              {currentProduct.similarity}%
+            </div>
+            <div className="text-sm text-muted-text">Similarity Score</div>
+            <div className="w-full bg-neutral-200 rounded-full h-2 mt-2">
               <div
                 className={`h-2 rounded-full ${
-                  similarProduct.similarity >= 80
+                  currentProduct.similarity >= 80
                     ? "bg-success"
-                    : similarProduct.similarity >= 60
+                    : currentProduct.similarity >= 60
                     ? "bg-warning"
                     : "bg-error"
                 }`}
-                style={{ width: `${similarProduct.similarity}%` }}
+                style={{ width: `${currentProduct.similarity}%` }}
               />
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Comparison Insights */}
-      <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-primary-text mb-4">
-          Adjust vs. Imitate Insights
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-error-text mb-3 flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Adjust (Avoid Pitfalls)
-            </h4>
-            <ul className="space-y-2 text-sm text-secondary-text">
-              <li className="flex items-start">
-                <AlertCircle className="w-4 h-4 text-error mr-2 mt-0.5 flex-shrink-0" />
-                <span>High annual fees deter price-sensitive customers</span>
-              </li>
-              <li className="flex items-start">
-                <AlertCircle className="w-4 h-4 text-error mr-2 mt-0.5 flex-shrink-0" />
-                <span>Complex application process increases abandonment</span>
-              </li>
-              <li className="flex items-start">
-                <AlertCircle className="w-4 h-4 text-error mr-2 mt-0.5 flex-shrink-0" />
-                <span>Limited mobile features reduce adoption</span>
-              </li>
-              <li className="flex items-start">
-                <AlertCircle className="w-4 h-4 text-error mr-2 mt-0.5 flex-shrink-0" />
-                <span>Poor customer support leads to high churn</span>
-              </li>
-            </ul>
+        {/* Product Details Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Left Column - Product Info */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-primary-text mb-3">
+                Product Overview
+              </h3>
+              <p className="text-secondary-text mb-4">
+                {currentProduct.overview}
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                  <span className="text-sm text-secondary-text">
+                    Target Audience
+                  </span>
+                  <span className="text-sm font-medium text-primary-text">
+                    {currentProduct.targetAudience}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                  <span className="text-sm text-secondary-text">
+                    Market Share
+                  </span>
+                  <span className="text-sm font-medium text-primary-text">
+                    {currentProduct.marketShare}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                  <span className="text-sm text-secondary-text">Pricing</span>
+                  <span className="text-sm font-medium text-primary-text">
+                    {currentProduct.pricing}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-primary-text mb-3">
+                Key Features
+              </h3>
+              <ul className="space-y-2">
+                {currentProduct.features.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-secondary-text">
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div>
-            <h4 className="font-medium text-success-text mb-3 flex items-center">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Imitate (Best Practices)
-            </h4>
-            <ul className="space-y-2 text-sm text-secondary-text">
-              <li className="flex items-start">
-                <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
-                <span>Simple, transparent fee structure</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
-                <span>Streamlined digital onboarding</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
-                <span>Strong mobile-first approach</span>
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
-                <span>Excellent customer support and education</span>
-              </li>
-            </ul>
+
+          {/* Right Column - Insights */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-primary-text mb-3 flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2 text-error" />
+                Adjust (Avoid Pitfalls)
+              </h3>
+              <ul className="space-y-2">
+                {currentProduct.adjustInsights.map((insight, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start p-3 bg-error-light rounded-lg"
+                  >
+                    <XCircle className="w-4 h-4 text-error mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-error-text">{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-primary-text mb-3 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2 text-success" />
+                Imitate (Best Practices)
+              </h3>
+              <ul className="space-y-2">
+                {currentProduct.imitateInsights.map((insight, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start p-3 bg-success-light rounded-lg"
+                  >
+                    <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-success-text">{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Success vs Failure Analysis */}
-      <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-primary-text mb-4">
-          Success vs Failure Analysis
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-4 bg-success-light rounded-lg">
-            <h4 className="font-medium text-success-text mb-3 flex items-center">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Successful Products (3)
-            </h4>
-            <div className="space-y-2 text-sm text-success-text">
-              <p>• Average similarity score: 84%</p>
-              <p>
-                • Common factors: Strong mobile experience, transparent pricing
-              </p>
-              <p>• Average time to market: 2.3 months</p>
-            </div>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-6 border-t border-neutral-200">
+          <div className="text-sm text-muted-text">
+            Product {currentIndex + 1} of {sortedProducts.length}
           </div>
-          <div className="p-4 bg-error-light rounded-lg">
-            <h4 className="font-medium text-error-text mb-3 flex items-center">
-              <TrendingDown className="w-4 h-4 mr-2" />
-              Failed Products (2)
-            </h4>
-            <div className="space-y-2 text-sm text-error-text">
-              <p>• Average similarity score: 78%</p>
-              <p>• Common factors: Complex processes, poor compliance</p>
-              <p>• Average time to market: 3.1 months</p>
-            </div>
+          <div className="flex gap-2">
+            <button className="p-2 text-muted-text hover:text-primary transition-colors">
+              <Download className="w-4 h-4" />
+            </button>
+            <button className="p-2 text-muted-text hover:text-primary transition-colors">
+              <Share2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
