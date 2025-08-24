@@ -1,433 +1,279 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Tag,
-  MapPin,
-  Settings,
-  MoreHorizontal,
-} from "lucide-react";
+import { useState } from "react";
 import { Header } from "@/components/ui/header";
-import { Product } from "@/types/product";
+import { Sidebar } from "@/components/ui/sidebar";
+import { MarketOpportunity } from "@/components/ui/market-opportunity";
+import { SimilarProducts } from "@/components/ui/similar-products";
+import { VirtualPersonas } from "@/components/ui/virtual-personas";
+import { SiLabInsights } from "@/components/ui/silab-insights";
 import { mockProducts } from "@/lib/mock-data";
-import { formatProductType, formatComplianceStatus } from "@/lib/utils";
-import { useMemo } from "react";
+import { Product } from "@/types/product";
+import {
+  TrendingUp,
+  Users,
+  Target,
+  BarChart3,
+  Shield,
+  Eye,
+  Download,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Info,
+  Calendar,
+  Building,
+  DollarSign,
+  TrendingDown,
+  Star,
+  Zap,
+  Lightbulb,
+  ArrowRight,
+  Filter,
+  Search,
+  Plus,
+  Edit,
+  Save,
+  X,
+} from "lucide-react";
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const productId = params.productId as string;
+interface ProductDashboardProps {
+  params: { productId: string };
+}
 
-  // Find the product by ID
-  const product = useMemo(() => {
-    return mockProducts.find((p) => p.id === productId);
-  }, [productId]);
+type TopLevelTab = "synmarket" | "compliance";
+type SidebarTab = "opportunity" | "similar" | "personas" | "insights";
+
+export default function ProductDashboard({ params }: ProductDashboardProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>("synmarket");
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("opportunity");
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Find the product
+  const product = mockProducts.find((p) => p.id === params.productId);
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header searchValue="" onSearchChange={() => {}} />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
-              Product Not Found
-            </h1>
-            <p className="text-neutral-600 mb-4">
-              The product you're looking for doesn't exist.
-            </p>
-            <button
-              onClick={() => router.push("/products")}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Back to Products
-            </button>
-          </div>
+      <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-primary-text mb-2">
+            Product Not Found
+          </h1>
+          <p className="text-secondary-text">
+            The requested product could not be found.
+          </p>
         </div>
       </div>
     );
   }
 
-  const getComplianceStatusStyle = (status: Product["complianceStatus"]) => {
-    switch (status) {
-      case "Compliant":
-        return "bg-green-100 text-green-800";
-      case "PendingReview":
-        return "bg-yellow-100 text-yellow-800";
-      case "ViolationsFound":
-        return "bg-red-100 text-red-800";
+  const toggleSection = (sectionId: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const sidebarTabs = [
+    { id: "opportunity", name: "Market Opportunity", icon: TrendingUp },
+    { id: "similar", name: "Similar Products", icon: BarChart3 },
+    { id: "personas", name: "Virtual Personas", icon: Users },
+    { id: "insights", name: "SiLab Insights", icon: Lightbulb },
+  ];
+
+  const renderMainContent = () => {
+    switch (sidebarTab) {
+      case "opportunity":
+        return (
+          <MarketOpportunity
+            product={product}
+            expandedSections={expandedSections}
+            onToggleSection={toggleSection}
+          />
+        );
+      case "similar":
+        return <SimilarProducts product={product} />;
+      case "personas":
+        return (
+          <VirtualPersonas
+            product={product}
+            expandedSections={expandedSections}
+            onToggleSection={toggleSection}
+          />
+        );
+      case "insights":
+        return (
+          <SiLabInsights
+            product={product}
+            expandedSections={expandedSections}
+            onToggleSection={toggleSection}
+          />
+        );
       default:
-        return "bg-gray-100 text-gray-800";
+        return (
+          <MarketOpportunity
+            product={product}
+            expandedSections={expandedSections}
+            onToggleSection={toggleSection}
+          />
+        );
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-white">
-      <Header searchValue="" onSearchChange={() => {}} />
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Header */}
+      <Header
+        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Back button and breadcrumb */}
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors mr-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </button>
-          <div className="text-sm text-neutral-500">
-            <span
-              className="hover:text-neutral-700 cursor-pointer"
-              onClick={() => router.push("/products")}
-            >
-              Products
-            </span>
-            <span className="mx-2">/</span>
-            <span className="text-neutral-900">{product.name}</span>
-          </div>
-        </div>
+      <div className="flex">
+        {/* Sidebar */}
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Product header */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex-1">
-            <div className="flex items-center mb-2">
-              <h1 className="text-3xl font-bold text-neutral-900 mr-4">
-                {product.name}
-              </h1>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getComplianceStatusStyle(
-                  product.complianceStatus
-                )}`}
-              >
-                {formatComplianceStatus(product.complianceStatus)}
-              </span>
-            </div>
-            <p className="text-lg text-neutral-600 mb-4">
-              {product.description ||
-                "No description available for this product."}
-            </p>
-
-            {/* Meta information */}
-            <div className="flex items-center space-x-6 text-sm text-neutral-500">
-              <div className="flex items-center">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span>{formatProductType(product.type)}</span>
-              </div>
-              {product.updatedAt && (
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span>Updated {formatDate(product.updatedAt)}</span>
-                </div>
-              )}
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
-                <span>Created {formatDate(product.createdAt)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-              <Settings className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Target Personas section */}
-        {product.targetPersonas.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-3 flex items-center">
-              <Tag className="w-5 h-5 mr-2" />
-              Target Personas
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {product.targetPersonas.map((persona) => (
-                <span
-                  key={persona}
-                  className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium hover:bg-orange-200 transition-colors cursor-pointer"
-                >
-                  {persona}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Content sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-                Overview
-              </h2>
-              <div className="prose prose-neutral max-w-none">
-                <p className="text-neutral-700 leading-relaxed">
-                  {product.description ||
-                    `${product.name} is a ${formatProductType(
-                      product.type
-                    ).toLowerCase()} that provides essential functionality for your business needs. This product is currently ${formatComplianceStatus(
-                      product.complianceStatus
-                    ).toLowerCase()}.`}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-                Technical Details
-              </h2>
-              <div className="bg-neutral-50 rounded-lg p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                      Product ID
-                    </dt>
-                    <dd className="mt-1 text-sm text-neutral-900 font-mono">
-                      {product.id}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                      Product Type
-                    </dt>
-                    <dd className="mt-1 text-sm text-neutral-900">
-                      {formatProductType(product.type)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                      Compliance Status
-                    </dt>
-                    <dd className="mt-1 text-sm text-neutral-900">
-                      {formatComplianceStatus(product.complianceStatus)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                      Target Personas
-                    </dt>
-                    <dd className="mt-1 text-sm text-neutral-900">
-                      {product.targetPersonas.join(", ")}
-                    </dd>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Product-specific attributes */}
-            <div>
-              <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-                Product Attributes
-              </h2>
-              <div className="bg-neutral-50 rounded-lg p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {product.type === "CreditCard" && (
-                    <>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Credit Limit Range
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          $
-                          {product.attributes.creditLimitRange.min.toLocaleString()}{" "}
-                          - $
-                          {product.attributes.creditLimitRange.max.toLocaleString()}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Annual Fee
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          ${product.attributes.annualFee}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Interest Rate APR
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.interestRateAPR}%
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Rewards Type
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.rewardsType}
-                        </dd>
-                      </div>
-                    </>
-                  )}
-
-                  {product.type === "PersonalLoan" && (
-                    <>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Loan Amount Range
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          $
-                          {product.attributes.loanAmountRange.min.toLocaleString()}{" "}
-                          - $
-                          {product.attributes.loanAmountRange.max.toLocaleString()}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Interest Rate APR
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.interestRateAPR}%
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Tenure Range
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.tenureRangeMonths.min} -{" "}
-                          {product.attributes.tenureRangeMonths.max} months
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Collateral Required
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.collateralRequired ? "Yes" : "No"}
-                        </dd>
-                      </div>
-                    </>
-                  )}
-
-                  {product.type === "MicrofinanceLoan" && (
-                    <>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Loan Amount Range
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          $
-                          {product.attributes.loanAmountRange.min.toLocaleString()}{" "}
-                          - $
-                          {product.attributes.loanAmountRange.max.toLocaleString()}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Group Lending
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.groupLending ? "Yes" : "No"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Repayment Schedule
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.repaymentSchedule}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Financial Literacy Support
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.financialLiteracySupport
-                            ? "Yes"
-                            : "No"}
-                        </dd>
-                      </div>
-                    </>
-                  )}
-
-                  {product.type === "SavingsAccount" && (
-                    <>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Minimum Balance
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          $
-                          {product.attributes.minimumBalance?.toLocaleString() ||
-                            0}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
-                          Interest Rate
-                        </dt>
-                        <dd className="mt-1 text-sm text-neutral-900">
-                          {product.attributes.interestRate}%
-                        </dd>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-neutral-900 mb-4">
-                Quick Actions
-              </h3>
-              <div className="space-y-3">
-                <button className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                  Edit Product
-                </button>
-                <button className="w-full px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
-                  View Analytics
-                </button>
-                <button className="w-full px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
-                  Export Data
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-neutral-900 mb-4">
-                Related Products
-              </h3>
-              <div className="space-y-3">
-                {mockProducts
-                  .filter((p) => p.id !== product.id && p.type === product.type)
-                  .slice(0, 3)
-                  .map((relatedProduct) => (
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Top-Level Navigation */}
+          <div className="bg-bg-primary border-b border-neutral-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between py-4">
+                <div className="flex items-center space-x-8">
+                  <h1 className="text-2xl font-bold text-primary-text">
+                    {product.name}
+                  </h1>
+                  <div className="flex space-x-1">
                     <button
-                      key={relatedProduct.id}
-                      onClick={() => {
-                        router.push(`/products/${relatedProduct.id}`);
-                      }}
-                      className="w-full text-left p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
+                      onClick={() => setTopLevelTab("synmarket")}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        topLevelTab === "synmarket"
+                          ? "bg-primary text-inverse"
+                          : "text-secondary-text hover:text-primary-text"
+                      }`}
                     >
-                      <div className="text-sm font-medium text-neutral-900">
-                        {relatedProduct.name}
-                      </div>
-                      <div className="text-xs text-neutral-500 mt-1">
-                        {formatProductType(relatedProduct.type)}
-                      </div>
+                      SynMarket View
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setTopLevelTab("compliance")}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        topLevelTab === "compliance"
+                          ? "bg-primary text-inverse"
+                          : "text-secondary-text hover:text-primary-text"
+                      }`}
+                    >
+                      ComplianceGuard
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="p-2 text-muted-text hover:text-primary transition-colors">
+                    <Download className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 text-muted-text hover:text-primary transition-colors">
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dashboard Content */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex gap-8">
+              {/* Left Sidebar Navigation */}
+              <div className="w-64 flex-shrink-0">
+                <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-4">
+                  <h3 className="text-sm font-semibold text-muted-text uppercase tracking-wider mb-4">
+                    Analysis Tools
+                  </h3>
+                  <div className="space-y-2">
+                    {sidebarTabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setSidebarTab(tab.id as SidebarTab)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center ${
+                            sidebarTab === tab.id
+                              ? "bg-primary text-inverse shadow-lg"
+                              : "text-secondary-text hover:text-primary-text hover:bg-neutral-100"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 mr-3" />
+                          {tab.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="flex-1">
+                {topLevelTab === "synmarket" ? (
+                  renderMainContent()
+                ) : (
+                  <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-8 text-center">
+                    <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-primary-text mb-2">
+                      ComplianceGuard
+                    </h2>
+                    <p className="text-secondary-text mb-6">
+                      Advanced compliance monitoring and regulatory analysis
+                      tools.
+                    </p>
+                    <p className="text-muted-text">
+                      ComplianceGuard features coming soon...
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right-Side Utility Panel */}
+              <div className="w-80 flex-shrink-0">
+                <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-4">
+                  <h3 className="text-sm font-semibold text-muted-text uppercase tracking-wider mb-4">
+                    Context & Tips
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="p-3 bg-primary-light rounded-lg">
+                      <h4 className="font-medium text-primary mb-2">
+                        Quick Tip
+                      </h4>
+                      <p className="text-sm text-primary">
+                        Use the similarity scores to identify successful
+                        patterns from competitors.
+                      </p>
+                    </div>
+                    <div className="p-3 bg-neutral-50 rounded-lg">
+                      <h4 className="font-medium text-primary-text mb-2">
+                        Export Options
+                      </h4>
+                      <div className="space-y-2">
+                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
+                          Export to PDF
+                        </button>
+                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
+                          Export to CSV
+                        </button>
+                        <button className="w-full text-left px-3 py-2 text-sm text-secondary-text hover:text-primary-text hover:bg-neutral-100 rounded transition-colors">
+                          Share Report
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

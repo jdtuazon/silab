@@ -20,19 +20,19 @@ const complianceConfig: Record<
   { color: string; bg: string; stripe: string }
 > = {
   Compliant: {
-    color: "text-green-700",
-    bg: "bg-green-100",
-    stripe: "bg-green-500",
+    color: "text-success-text",
+    bg: "bg-success-light",
+    stripe: "bg-success",
   },
   PendingReview: {
-    color: "text-yellow-700",
-    bg: "bg-yellow-100",
-    stripe: "bg-yellow-500",
+    color: "text-warning-text",
+    bg: "bg-warning-light",
+    stripe: "bg-warning",
   },
   ViolationsFound: {
-    color: "text-red-700",
-    bg: "bg-red-100",
-    stripe: "bg-red-500",
+    color: "text-error-text",
+    bg: "bg-error-light",
+    stripe: "bg-error",
   },
 };
 
@@ -58,7 +58,7 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
   return (
     <Link
       href={getProductUrl(product)}
-      className="group block bg-white rounded-2xl border border-neutral-200 hover:border-orange-500 hover:shadow-md transition-all duration-200 overflow-hidden"
+      className="group block bg-bg-primary rounded-2xl border border-neutral-200 hover:border-primary hover:shadow-md transition-all duration-200 overflow-hidden"
       aria-describedby={`product-${product.id}-status`}
     >
       <div className="relative">
@@ -70,10 +70,10 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
         <div className="p-6">
           {/* Header */}
           <div className="mb-4">
-            <h3 className="font-semibold text-neutral-900 text-lg mb-1 truncate group-hover:text-orange-700 transition-colors">
+            <h3 className="font-semibold text-primary-text text-lg mb-1 truncate group-hover:text-primary transition-colors">
               {product.name}
             </h3>
-            <p className="text-xs text-neutral-400 font-mono">
+            <p className="text-xs text-muted-text font-mono">
               {product.id.slice(-8)}
             </p>
           </div>
@@ -93,7 +93,7 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
 
           {/* Product Type and Tags */}
           <div className="mb-4">
-            <p className="text-sm text-neutral-600 mb-2">
+            <p className="text-sm text-secondary-text mb-2">
               {formatProductType(product.type)}
             </p>
             <div className="flex flex-wrap gap-1">
@@ -102,15 +102,15 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
                   key={tag}
                   className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                     selectedTags.includes(tag)
-                      ? "bg-orange-100 text-orange-700 border border-orange-200"
-                      : "bg-neutral-100 text-neutral-600"
+                      ? "bg-primary-light text-primary border border-primary"
+                      : "bg-neutral-100 text-secondary-text"
                   }`}
                 >
                   {tag}
                 </span>
               ))}
               {productTags.length > 3 && (
-                <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-neutral-100 text-neutral-600">
+                <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-neutral-100 text-secondary-text">
                   +{productTags.length - 3}
                 </span>
               )}
@@ -118,7 +118,7 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
           </div>
 
           {/* Modified date */}
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-muted-text">
             Modified on {formatDate(product.updatedAt)}
           </p>
         </div>

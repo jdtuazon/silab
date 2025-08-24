@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
-import { ProductStatus } from '@/types/product';
+import { useState } from "react";
+import { X, Plus } from "lucide-react";
+import { ProductStatus } from "@/types/product";
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -19,22 +19,26 @@ interface CreateProductData {
 }
 
 const statusOptions: { value: ProductStatus; label: string }[] = [
-  { value: 'in-dev', label: 'In Development' },
-  { value: 'qa', label: 'Quality Assurance' },
-  { value: 'prod', label: 'Production' },
-  { value: 'archived', label: 'Archived' },
+  { value: "in-dev", label: "In Development" },
+  { value: "qa", label: "Quality Assurance" },
+  { value: "prod", label: "Production" },
+  { value: "archived", label: "Archived" },
 ];
 
-export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductModalProps) {
+export function CreateProductModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: CreateProductModalProps) {
   const [formData, setFormData] = useState<CreateProductData>({
-    name: '',
-    category: '',
-    status: 'in-dev',
+    name: "",
+    category: "",
+    status: "in-dev",
     tags: [],
-    description: '',
+    description: "",
   });
-  
-  const [tagInput, setTagInput] = useState('');
+
+  const [tagInput, setTagInput] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,36 +46,36 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
       onSubmit(formData);
       // Reset form
       setFormData({
-        name: '',
-        category: '',
-        status: 'in-dev',
+        name: "",
+        category: "",
+        status: "in-dev",
         tags: [],
-        description: '',
+        description: "",
       });
-      setTagInput('');
+      setTagInput("");
       onClose();
     }
   };
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tagInput.trim()]
+        tags: [...prev.tags, tagInput.trim()],
       }));
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag();
     }
@@ -80,17 +84,19 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto">
+    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4">
+      <div className="bg-bg-primary rounded-2xl shadow-2xl w-full max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-900">Create New Product</h2>
+          <h2 className="text-xl font-semibold text-primary-text">
+            Create New Product
+          </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-neutral-500" />
+            <X className="w-5 h-5 text-secondary-text" />
           </button>
         </div>
 
@@ -98,15 +104,20 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Product Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-secondary-text mb-2"
+            >
               Product Name *
             </label>
             <input
               type="text"
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter product name"
               required
             />
@@ -114,15 +125,20 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
 
           {/* Category */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-secondary-text mb-2"
+            >
               Category *
             </label>
             <input
               type="text"
               id="category"
               value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, category: e.target.value }))
+              }
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="e.g., Web Application, Mobile App, API"
               required
             />
@@ -130,14 +146,22 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
 
           {/* Status */}
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label
+              htmlFor="status"
+              className="block text-sm font-medium text-secondary-text mb-2"
+            >
               Status
             </label>
             <select
               id="status"
               value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as ProductStatus }))}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  status: e.target.value as ProductStatus,
+                }))
+              }
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -149,7 +173,10 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
 
           {/* Tags */}
           <div>
-            <label htmlFor="tags" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label
+              htmlFor="tags"
+              className="block text-sm font-medium text-secondary-text mb-2"
+            >
               Tags
             </label>
             <div className="space-y-2">
@@ -160,31 +187,31 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleTagInputKeyDown}
-                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Add a tag"
                 />
                 <button
                   type="button"
                   onClick={addTag}
-                  className="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
+                  className="px-3 py-2 bg-primary-light text-primary rounded-lg hover:bg-primary transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              
+
               {/* Tag display */}
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {formData.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded text-sm"
+                      className="inline-flex items-center px-2 py-1 bg-primary-light text-primary rounded text-sm"
                     >
                       {tag}
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="ml-1 hover:text-orange-900"
+                        className="ml-1 hover:text-primary-hover"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -197,15 +224,23 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-secondary-text mb-2"
+            >
               Description
             </label>
             <textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               rows={3}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
               placeholder="Optional description"
             />
           </div>
@@ -215,13 +250,13 @@ export function CreateProductModal({ isOpen, onClose, onSubmit }: CreateProductM
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-neutral-300 text-secondary-text rounded-lg hover:bg-neutral-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors shadow-sm"
+              className="flex-1 px-4 py-2 bg-primary hover:bg-primary-hover text-inverse rounded-lg transition-colors shadow-sm"
             >
               Create Product
             </button>

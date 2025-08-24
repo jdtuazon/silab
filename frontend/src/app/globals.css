@@ -1,8 +1,76 @@
 @import "tailwindcss";
 
 :root {
+  /* Base colors - using existing Tailwind colors */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Primary brand colors */
+  --primary: #ea580c; /* orange-600 */
+  --primary-hover: #c2410c; /* orange-700 */
+  --primary-light: #fed7aa; /* orange-200 */
+  --primary-bg: #fff7ed; /* orange-50 */
+
+  /* Secondary colors */
+  --secondary: #6b7280; /* gray-500 */
+  --secondary-hover: #374151; /* gray-700 */
+  --secondary-light: #f3f4f6; /* gray-100 */
+
+  /* Status colors - using existing Tailwind colors */
+  --success: #16a34a; /* green-600 */
+  --success-light: #dcfce7; /* green-100 */
+  --success-text: #15803d; /* green-700 */
+
+  --warning: #ca8a04; /* yellow-600 */
+  --warning-light: #fef3c7; /* yellow-100 */
+  --warning-text: #a16207; /* yellow-700 */
+
+  --error: #dc2626; /* red-600 */
+  --error-light: #fee2e2; /* red-100 */
+  --error-text: #b91c1c; /* red-700 */
+
+  /* Neutral colors - using existing Tailwind colors */
+  --neutral-50: #fafafa;
+  --neutral-100: #f5f5f5;
+  --neutral-200: #e5e5e5;
+  --neutral-300: #d4d4d4;
+  --neutral-400: #a3a3a3;
+  --neutral-500: #737373;
+  --neutral-600: #525252;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  --neutral-900: #171717;
+
+  /* Product type colors - using existing Tailwind colors */
+  --blue: #2563eb; /* blue-600 */
+  --blue-light: #dbeafe; /* blue-100 */
+  --blue-text: #1d4ed8; /* blue-700 */
+
+  --green: #16a34a; /* green-600 */
+  --green-light: #dcfce7; /* green-100 */
+  --green-text: #15803d; /* green-700 */
+
+  --purple: #9333ea; /* purple-600 */
+  --purple-light: #f3e8ff; /* purple-100 */
+  --purple-text: #7c3aed; /* purple-700 */
+
+  /* UI element colors */
+  --border: #e5e5e5; /* neutral-200 */
+  --border-hover: #ea580c; /* primary */
+  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow-lg: rgba(0, 0, 0, 0.15);
+
+  /* Text colors */
+  --text-primary: #171717; /* neutral-900 */
+  --text-secondary: #525252; /* neutral-600 */
+  --text-muted: #a3a3a3; /* neutral-400 */
+  --text-inverse: #ffffff;
+
+  /* Background colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa; /* neutral-50 */
+  --bg-muted: #f5f5f5; /* neutral-100 */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
@@ -12,15 +80,166 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark mode class - only applied when explicitly added */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  /* Dark mode adjustments */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-muted: #262626;
+
+  --text-primary: #ededed;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+
+  --border: #404040;
+  --border-hover: #ea580c;
+
+  --neutral-50: #0a0a0a;
+  --neutral-100: #171717;
+  --neutral-200: #262626;
+  --neutral-300: #404040;
+  --neutral-400: #737373;
+  --neutral-500: #a3a3a3;
+  --neutral-600: #d4d4d4;
+  --neutral-700: #e5e5e5;
+  --neutral-800: #f5f5f5;
+  --neutral-900: #fafafa;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Utility classes for CSS variables */
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-primary-hover {
+  background-color: var(--primary-hover);
+}
+.bg-primary-light {
+  background-color: var(--primary-light);
+}
+.bg-primary-bg {
+  background-color: var(--primary-bg);
+}
+
+.bg-success {
+  background-color: var(--success);
+}
+.bg-success-light {
+  background-color: var(--success-light);
+}
+.bg-warning {
+  background-color: var(--warning);
+}
+.bg-warning-light {
+  background-color: var(--warning-light);
+}
+.bg-error {
+  background-color: var(--error);
+}
+.bg-error-light {
+  background-color: var(--error-light);
+}
+
+.bg-blue {
+  background-color: var(--blue);
+}
+.bg-blue-light {
+  background-color: var(--blue-light);
+}
+.bg-green {
+  background-color: var(--green);
+}
+.bg-green-light {
+  background-color: var(--green-light);
+}
+.bg-purple {
+  background-color: var(--purple);
+}
+.bg-purple-light {
+  background-color: var(--purple-light);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+.text-primary-hover {
+  color: var(--primary-hover);
+}
+.text-success {
+  color: var(--success);
+}
+.text-success-text {
+  color: var(--success-text);
+}
+.text-warning {
+  color: var(--warning);
+}
+.text-warning-text {
+  color: var(--warning-text);
+}
+.text-error {
+  color: var(--error);
+}
+.text-error-text {
+  color: var(--error-text);
+}
+
+.text-blue {
+  color: var(--blue);
+}
+.text-blue-text {
+  color: var(--blue-text);
+}
+.text-green {
+  color: var(--green);
+}
+.text-green-text {
+  color: var(--green-text);
+}
+.text-purple {
+  color: var(--purple);
+}
+.text-purple-text {
+  color: var(--purple-text);
+}
+
+.text-primary-text {
+  color: var(--text-primary);
+}
+.text-secondary-text {
+  color: var(--text-secondary);
+}
+.text-muted-text {
+  color: var(--text-muted);
+}
+.text-inverse {
+  color: var(--text-inverse);
+}
+
+.border-primary {
+  border-color: var(--primary);
+}
+.border-hover {
+  border-color: var(--border-hover);
+}
+.border-neutral {
+  border-color: var(--border);
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--primary-hover);
+}
+.hover\:text-primary:hover {
+  color: var(--primary-hover);
+}
+.hover\:border-primary:hover {
+  border-color: var(--primary);
 }
