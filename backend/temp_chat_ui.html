@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiLab Compliance RAG Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1000px;
+            height: 700px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #667eea;
+            color: white;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+        }
+        
+        .source-references {
+            margin-top: 12px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .source-references h4 {
+            font-size: 12px;
+            color: #1976D2;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .source-item {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            padding: 4px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .source-item:last-child {
+            border-bottom: none;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .input-field:focus {
+            border-color: #667eea;
+        }
+        
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            background: #5a6fd8;
+            transform: scale(1.05);
+        }
+        
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-style: italic;
+            padding: 12px 16px;
+        }
+        
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: loading 1.4s infinite ease-in-out both;
+        }
+        
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes loading {
+            0%, 80%, 100% { 
+                transform: scale(0);
+            } 40% { 
+                transform: scale(1);
+            }
+        }
+        
+        .quick-questions {
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .quick-questions h4 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .question-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .question-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .question-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #f44336;
+        }
+        
+        .file-drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 20px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .file-drop-zone.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: scale(1.02);
+        }
+        
+        .file-drop-zone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .drop-zone-content {
+            pointer-events: none;
+        }
+        
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+        
+        .drop-zone-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .drop-zone-subtext {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .compliance-result {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+        
+        .compliance-result.pass {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .compliance-result.fail {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .compliance-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        
+        .compliance-issues {
+            margin-top: 12px;
+        }
+        
+        .compliance-issue {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .issue-text {
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 4px;
+        }
+        
+        .issue-reason {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .issue-source {
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .processing-file {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        
+        .file-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .file-tab {
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s;
+        }
+        
+        .file-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+        
+        .file-tab:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🏛️ SiLab Compliance Checker</h1>
+            <p>Upload product proposals for compliance validation or ask questions about regulations</p>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="status-text">Connected to RAG System</span>
+            </div>
+        </div>
+        
+        <div class="file-tabs">
+            <button class="file-tab active" id="chat-tab" onclick="switchTab('chat')">💬 Chat</button>
+            <button class="file-tab" id="checker-tab" onclick="switchTab('checker')">📋 Compliance Checker</button>
+        </div>
+        
+        <!-- Chat Tab Content -->
+        <div class="chat-messages" id="chat-messages">
+            <div class="message assistant">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <p>Hello! I'm your compliance assistant. I have access to 30+ Philippine regulatory documents including:</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Anti-Money Laundering regulations (RA 9160)</li>
+                        <li>Data Privacy Act (RA 10173)</li>
+                        <li>BSP Circulars and banking regulations</li>
+                        <li>Various compliance guidelines</li>
+                    </ul>
+                    <p>Feel free to ask specific questions about compliance requirements!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Compliance Checker Tab Content -->
+        <div class="chat-messages" id="compliance-messages" style="display: none;">
+            <div class="file-drop-zone" id="file-drop-zone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(event)">
+                <div class="drop-zone-content">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">Drop your product proposal here</div>
+                    <div class="drop-zone-subtext">or click to select • PDF, DOC, DOCX, TXT files</div>
+                </div>
+            </div>
+            
+            <div class="message assistant">
+                <div class="message-avatar">⚖️</div>
+                <div class="message-content">
+                    <p><strong>Compliance Document Validator</strong></p>
+                    <p>Upload your product proposal document and I'll check it line-by-line against Philippine compliance regulations including:</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>🏛️ Anti-Money Laundering (AML) requirements</li>
+                        <li>🔒 Data Privacy Act compliance</li>
+                        <li>🏦 BSP banking regulations</li>
+                        <li>📋 Industry-specific guidelines</li>
+                    </ul>
+                    <p>I'll identify any potential violations and cite the specific regulation that applies.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-questions">
+            <h4>Quick Questions</h4>
+            <div class="question-buttons">
+                <button class="question-btn" onclick="askQuestion('What are the key anti-money laundering requirements for banks?')">AML Requirements</button>
+                <button class="question-btn" onclick="askQuestion('What are the data privacy obligations under RA 10173?')">Data Privacy</button>
+                <button class="question-btn" onclick="askQuestion('BSP circular requirements for digital banking')">Digital Banking</button>
+                <button class="question-btn" onclick="askQuestion('What are the reporting requirements for suspicious transactions?')">Suspicious Transactions</button>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <form class="input-form" id="chat-form">
+                <div class="input-wrapper">
+                    <textarea 
+                        class="input-field" 
+                        id="message-input" 
+                        placeholder="Ask about compliance requirements, regulations, or specific circular provisions..."
+                        rows="1"
+                    ></textarea>
+                </div>
+                <button type="submit" class="send-button" id="send-button">
+                    <span id="send-icon">▶</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatForm = document.getElementById('chat-form');
+        const statusText = document.getElementById('status-text');
+        
+        // API Configuration
+        const API_BASE = 'http://localhost:8000';
+        
+        // Check API health on load
+        checkAPIHealth();
+        
+        async function checkAPIHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                if (response.ok) {
+                    statusText.textContent = 'Connected to RAG System';
+                    statusText.parentElement.style.display = 'inline-flex';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                console.log('API Health Check Error:', error);
+                statusText.textContent = 'CORS Issue - API is running';
+                statusText.parentElement.style.background = 'rgba(255, 193, 7, 0.2)';
+                document.querySelector('.status-dot').style.background = '#ffc107';
+            }
+        }
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        // Handle form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                sendMessage(message);
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+            }
+        });
+        
+        // Handle Enter key (Shift+Enter for new line)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        function askQuestion(question) {
+            messageInput.value = question;
+            sendMessage(question);
+        }
+        
+        async function sendMessage(message) {
+            // Add user message
+            addMessage(message, 'user');
+            
+            // Show loading
+            const loadingId = showLoading();
+            
+            // Disable input
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/r2r/chat`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: message,
+                        limit: 5,
+                        use_hybrid_search: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Remove loading
+                removeLoading(loadingId);
+                
+                // Add assistant response
+                addMessage(data.response.completion, 'assistant', data.response.search_results);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                removeLoading(loadingId);
+                addError(`Sorry, I encountered an error: ${error.message}. Make sure the FastAPI backend is running on port 8000.`);
+            } finally {
+                // Re-enable input
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+        
+        function addMessage(content, type, sources = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = type === 'user' ? '👤' : '🤖';
+            
+            let sourcesHtml = '';
+            if (sources && sources.length > 0) {
+                sourcesHtml = `
+                    <div class="source-references">
+                        <h4>📚 Source Documents</h4>
+                        ${sources.slice(0, 3).map(source => `
+                            <div class="source-item">
+                                <strong>${source.metadata?.filename || 'Unknown document'}</strong>
+                                <br>Score: ${(source.score || 0).toFixed(3)} | Preview: ${(source.text || '').substring(0, 100)}...
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <p>${content.replace(/\n/g, '<br>')}</p>
+                    ${sourcesHtml}
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function addError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.innerHTML = `
+                <div class="error-message">
+                    <strong>⚠️ Error:</strong> ${message}
+                </div>
+            `;
+            chatMessages.appendChild(errorDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function showLoading() {
+            const loadingId = 'loading-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = 'message assistant';
+            loadingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content loading">
+                    <span>Searching compliance documents</span>
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return loadingId;
+        }
+        
+        function removeLoading(loadingId) {
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
+        
+        // Tab switching functionality
+        let currentTab = 'chat';
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            const chatTab = document.getElementById('chat-tab');
+            const checkerTab = document.getElementById('checker-tab');
+            const chatMessages = document.getElementById('chat-messages');
+            const complianceMessages = document.getElementById('compliance-messages');
+            const chatInput = document.querySelector('.chat-input');
+            const quickQuestions = document.querySelector('.quick-questions');
+            
+            if (tab === 'chat') {
+                chatTab.classList.add('active');
+                checkerTab.classList.remove('active');
+                chatMessages.style.display = 'block';
+                complianceMessages.style.display = 'none';
+                chatInput.style.display = 'block';
+                quickQuestions.style.display = 'block';
+            } else {
+                chatTab.classList.remove('active');
+                checkerTab.classList.add('active');
+                chatMessages.style.display = 'none';
+                complianceMessages.style.display = 'block';
+                chatInput.style.display = 'none';
+                quickQuestions.style.display = 'none';
+            }
+        }
+        
+        // File handling functionality
+        const fileDropZone = document.getElementById('file-drop-zone');
+        const fileInput = document.getElementById('file-input');
+        
+        // Drag and drop handlers
+        fileDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.add('dragover');
+        });
+        
+        fileDropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.remove('dragover');
+        });
+        
+        fileDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+        
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+        
+        async function handleFileUpload(file) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            // Show processing message
+            const processingDiv = document.createElement('div');
+            processingDiv.id = 'processing-' + Date.now();
+            processingDiv.innerHTML = `
+                <div class="processing-file">
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <span>Processing ${file.name} for compliance violations...</span>
+                </div>
+            `;
+            complianceMessages.appendChild(processingDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+            
+            try {
+                // Read file content
+                const fileContent = await readFileContent(file);
+                
+                // Analyze for compliance
+                await analyzeCompliance(file.name, fileContent, processingDiv.id);
+                
+            } catch (error) {
+                console.error('File processing error:', error);
+                processingDiv.innerHTML = `
+                    <div class="error-message">
+                        ❌ Error processing ${file.name}: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+        
+        async function analyzeCompliance(fileName, content, processingId) {
+            try {
+                // Split content into individual lines for line-by-line analysis
+                const lines = content.split('\n').filter(line => line.trim().length > 10);
+                let allViolations = [];
+                let lineByLineResults = []; // Store detailed results for file output
+                
+                const complianceMessages = document.getElementById('compliance-messages');
+                
+                // Update processing message to show progress
+                const processingElement = document.getElementById(processingId);
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // Update progress
+                    processingElement.innerHTML = `
+                        <div class="processing-file">
+                            <div class="loading-dots">
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                            </div>
+                            <span>Analyzing line ${i + 1}/${lines.length}: "${line.substring(0, 60)}..."</span>
+                        </div>
+                    `;
+                    
+                    // Skip headers and short lines but still record them
+                    const isSkipped = (line.length < 20 || /^[A-Z\s]+$/.test(line));
+                    
+                    if (isSkipped) {
+                        lineByLineResults.push({
+                            lineNumber: i + 1,
+                            originalText: line,
+                            status: "SKIPPED",
+                            reason: "Header or too short",
+                            analysis: "N/A",
+                            violations: 0
+                        });
+                        continue;
+                    }
+                    
+                    // Create focused compliance analysis for this specific line
+                    const taskPrompt = `You are analyzing financial service features against Philippine regulations. Based on the retrieved regulatory documents, does the provided text violate any compliance requirements? 
+
+Respond in this exact format:
+
+If violations found:
+VIOLATIONS_FOUND: [number]
+VIOLATION_TEXT: [quote the problematic text]
+COMPLIANCE_ISSUE: [explain the specific violation]
+REGULATORY_SOURCE: [cite the specific law/regulation from the documents]
+
+If no violations:
+VIOLATIONS_FOUND: 0
+REASON: [brief explanation why it's compliant]
+
+Be strict - flag anything that could be problematic based on the regulatory documents.`;
+
+                    try {
+                        const response = await fetch(`${API_BASE}/r2r/chat`, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                query: line,
+                                limit: 8,
+                                use_hybrid_search: true,
+                                task_prompt: taskPrompt
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`API Error: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        const lineAnalysis = data.response.completion;
+                        
+                        // Debug: Always show what we got from the API
+                        console.log(`Line ${i + 1} analysis:`, lineAnalysis);
+                        
+                        // Parse violations from analysis
+                        const violationCount = extractViolationCount(lineAnalysis);
+                        const violation = parseLineViolation(line, lineAnalysis);
+                        
+                        // Record detailed line result - always create result even if empty
+                        const lineResult = {
+                            lineNumber: i + 1,
+                            originalText: line,
+                            status: violationCount > 0 ? "VIOLATION" : "COMPLIANT",
+                            violations: violationCount,
+                            analysis: lineAnalysis || "No analysis returned from API",
+                            complianceIssue: violation ? violation.issue : null,
+                            regulatorySource: violation ? violation.source : null
+                        };
+                        
+                        lineByLineResults.push(lineResult);
+                        
+                        if (violation) {
+                            allViolations.push(violation);
+                            // Add real-time violation display
+                            addViolationToDisplay(violation, i + 1, lines.length);
+                        }
+                        
+                    } catch (error) {
+                        console.error(`Error analyzing line ${i + 1}:`, error);
+                        
+                        // Record error in results
+                        lineByLineResults.push({
+                            lineNumber: i + 1,
+                            originalText: line,
+                            status: "ERROR",
+                            reason: error.message,
+                            analysis: "Analysis failed: " + error.message,
+                            violations: 0
+                        });
+                    }
+                    
+                    // Small delay to avoid overwhelming
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Remove processing message
+                document.getElementById(processingId).remove();
+                
+                // Generate and offer file downloads
+                console.log('Generating result files...', {
+                    fileName,
+                    totalResults: lineByLineResults.length,
+                    totalViolations: allViolations.length
+                });
+                generateResultFiles(fileName, lineByLineResults, allViolations);
+                
+                // Display final summary
+                displayFinalSummary(fileName, allViolations);
+                
+            } catch (error) {
+                throw new Error(`Compliance analysis failed: ${error.message}`);
+            }
+        }
+        
+        function extractViolationCount(analysisText) {
+            if (!analysisText) return 0;
+            const match = analysisText.match(/VIOLATIONS_FOUND:\s*(\d+)/);
+            return match ? parseInt(match[1]) : 0;
+        }
+        
+        function generateResultFiles(fileName, lineByLineResults, violations) {
+            console.log('generateResultFiles called:', {fileName, results: lineByLineResults.length, violations: violations.length});
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const baseName = fileName.replace(/\.[^/.]+$/, "");
+            
+            // Generate JSON file
+            const jsonResults = {
+                documentName: fileName,
+                analysisDate: new Date().toISOString(),
+                summary: {
+                    totalLines: lineByLineResults.length,
+                    linesAnalyzed: lineByLineResults.filter(r => r.status !== 'SKIPPED').length,
+                    violationsFound: violations.length,
+                    complianceStatus: violations.length === 0 ? 'COMPLIANT' : 'NON-COMPLIANT'
+                },
+                lineByLineAnalysis: lineByLineResults,
+                violationsSummary: violations
+            };
+            
+            // Generate text file
+            let textContent = `COMPLIANCE ANALYSIS REPORT
+========================================
+Document: ${fileName}
+Analysis Date: ${new Date().toLocaleString()}
+Total Lines: ${lineByLineResults.length}
+Lines Analyzed: ${lineByLineResults.filter(r => r.status !== 'SKIPPED').length}
+Violations Found: ${violations.length}
+Overall Status: ${violations.length === 0 ? 'COMPLIANT' : 'NON-COMPLIANT'}
+
+LINE-BY-LINE ANALYSIS:
+========================================
+
+`;
+
+            lineByLineResults.forEach(result => {
+                textContent += `Line ${result.lineNumber}: ${result.status}\n`;
+                textContent += `Text: "${result.originalText}"\n`;
+                textContent += `Analysis: ${result.analysis}\n`;
+                if (result.complianceIssue) {
+                    textContent += `Issue: ${result.complianceIssue}\n`;
+                }
+                if (result.regulatorySource) {
+                    textContent += `Source: ${result.regulatorySource}\n`;
+                }
+                textContent += `\n${'='.repeat(50)}\n\n`;
+            });
+            
+            // Create download links
+            createDownloadLink(JSON.stringify(jsonResults, null, 2), `${baseName}_compliance_analysis_${timestamp}.json`, 'JSON Results');
+            createDownloadLink(textContent, `${baseName}_compliance_analysis_${timestamp}.txt`, 'Text Report');
+        }
+        
+        function createDownloadLink(content, filename, label) {
+            console.log('Creating download link:', {filename, label, contentLength: content.length});
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            const downloadDiv = document.createElement('div');
+            downloadDiv.className = 'message assistant';
+            downloadDiv.innerHTML = `
+                <div class="message-avatar">📄</div>
+                <div class="message-content">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span>📥 Download ${label}:</span>
+                        <button onclick="downloadFile('${btoa(content)}', '${filename}')" 
+                                style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                            ${filename}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            complianceMessages.appendChild(downloadDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+        }
+        
+        function downloadFile(base64Content, filename) {
+            const content = atob(base64Content);
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function parseLineViolation(originalLine, analysisText) {
+            if (!analysisText || extractViolationCount(analysisText) === 0) {
+                return null;
+            }
+            
+            const violationTextMatch = analysisText.match(/VIOLATION_TEXT:\s*(.+)/);
+            const issueMatch = analysisText.match(/COMPLIANCE_ISSUE:\s*(.+)/);
+            const sourceMatch = analysisText.match(/REGULATORY_SOURCE:\s*(.+)/);
+            
+            return {
+                originalLine: originalLine,
+                problematicText: violationTextMatch ? violationTextMatch[1].trim() : originalLine,
+                violationType: 'Compliance',
+                issue: issueMatch ? issueMatch[1].trim() : 'Compliance violation detected',
+                source: sourceMatch ? sourceMatch[1].trim() : 'Philippine Financial Regulations'
+            };
+        }
+        
+        function addViolationToDisplay(violation, lineNum, totalLines) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            const violationDiv = document.createElement('div');
+            violationDiv.className = 'message assistant';
+            violationDiv.innerHTML = `
+                <div class="message-avatar">⚠️</div>
+                <div class="message-content">
+                    <div class="compliance-issue">
+                        <div class="issue-text">❌ Line ${lineNum}: "${violation.originalLine}"</div>
+                        <div class="issue-reason">
+                            <strong>Violation Type:</strong> ${violation.violationType}<br>
+                            <strong>Issue:</strong> ${violation.issue}
+                        </div>
+                        <div class="issue-source">
+                            <strong>Regulation Violated:</strong> ${violation.source || violation.regulation || 'Philippine Financial Regulations'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            complianceMessages.appendChild(violationDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+        }
+        
+        function displayFinalSummary(fileName, violations) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'message assistant';
+            
+            const isPass = violations.length === 0;
+            
+            summaryDiv.innerHTML = `
+                <div class="message-avatar">📋</div>
+                <div class="message-content">
+                    <div class="compliance-result ${isPass ? 'pass' : 'fail'}">
+                        <div class="compliance-header">
+                            <span>${isPass ? '✅' : '❌'}</span>
+                            <span><strong>Final Analysis Summary: ${fileName}</strong></span>
+                        </div>
+                        <p>${isPass ? 
+                            '🎉 Document analysis complete! No violations detected.' : 
+                            `🚨 COMPLIANCE ANALYSIS COMPLETE: Found ${violations.length} violations across multiple lines.`
+                        }</p>
+                        
+                        ${!isPass ? `
+                            <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                                <h4 style="margin: 0 0 10px 0; color: #856404;">📊 Violation Breakdown:</h4>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    <li><strong>AML Violations:</strong> ${violations.filter(v => v.violationType.includes('AML')).length}</li>
+                                    <li><strong>Data Privacy Violations:</strong> ${violations.filter(v => v.violationType.includes('Privacy')).length}</li>
+                                    <li><strong>Banking Regulation Violations:</strong> ${violations.filter(v => v.violationType.includes('Banking')).length}</li>
+                                    <li><strong>Other Compliance Issues:</strong> ${violations.filter(v => !v.violationType.includes('AML') && !v.violationType.includes('Privacy') && !v.violationType.includes('Banking')).length}</li>
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            complianceMessages.appendChild(summaryDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+        }
+        
+        function parseViolations(analysisText) {
+            const violations = [];
+            
+            // Extract number of violations
+            const violationsMatch = analysisText.match(/VIOLATIONS_FOUND:\s*(\d+)/);
+            if (!violationsMatch || violationsMatch[1] === '0') {
+                return violations;
+            }
+            
+            // Split by violation markers
+            const violationSections = analysisText.split('VIOLATION_TEXT:').slice(1);
+            
+            violationSections.forEach(section => {
+                const lines = section.split('\n').map(line => line.trim()).filter(line => line);
+                
+                let violationText = '';
+                let complianceIssue = '';
+                let regulatorySource = '';
+                
+                for (let line of lines) {
+                    if (line.startsWith('COMPLIANCE_ISSUE:')) {
+                        complianceIssue = line.replace('COMPLIANCE_ISSUE:', '').trim();
+                    } else if (line.startsWith('REGULATORY_SOURCE:')) {
+                        regulatorySource = line.replace('REGULATORY_SOURCE:', '').trim();
+                    } else if (!line.includes('---') && line.length > 0 && !violationText) {
+                        violationText = line;
+                    }
+                }
+                
+                if (violationText && complianceIssue) {
+                    violations.push({
+                        text: violationText,
+                        issue: complianceIssue,
+                        source: regulatorySource || 'Philippine Financial Regulations'
+                    });
+                }
+            });
+            
+            return violations;
+        }
+        
+        function displayComplianceResults(fileName, violations) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            const isPass = violations.length === 0;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `message assistant`;
+            
+            let violationsHtml = '';
+            if (violations.length > 0) {
+                violationsHtml = `
+                    <div class="compliance-issues">
+                        ${violations.map((violation, index) => {
+                            return `
+                                <div class="compliance-issue">
+                                    <div class="issue-text">❌ Violation ${index + 1}: "${violation.text}"</div>
+                                    <div class="issue-reason">${violation.issue}</div>
+                                    <div class="issue-source">
+                                        <strong>Regulatory Source:</strong> ${violation.source}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="message-avatar">⚖️</div>
+                <div class="message-content">
+                    <div class="compliance-result ${isPass ? 'pass' : 'fail'}">
+                        <div class="compliance-header">
+                            <span>${isPass ? '✅' : '❌'}</span>
+                            <span><strong>Compliance Analysis: ${fileName}</strong></span>
+                        </div>
+                        <p>${isPass ? 
+                            '🎉 Document passes compliance check! No violations detected.' : 
+                            `⚠️ Found ${violations.length} compliance violation(s):`
+                        }</p>
+                        ${violationsHtml}
+                    </div>
+                </div>
+            `;
+            
+            complianceMessages.appendChild(resultDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+        }
+        
+        // Focus input on load
+        window.addEventListener('load', () => {
+            if (messageInput) messageInput.focus();
+        });
+    </script>
+</body>
+</html>
