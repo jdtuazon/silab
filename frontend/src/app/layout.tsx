@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DataWave SiLab - Product Management Platform",
-  description: "A comprehensive platform for managing products, tracking metrics, and streamlining your development workflow with real-time insights.",
+  title: "SiLab",
+  description:
+    "A comprehensive platform for managing products, tracking metrics, and streamlining your development workflow with real-time insights.",
 };
 
 export default function RootLayout({
