@@ -13,23 +13,18 @@ import {
 import { Header } from "@/components/ui/header";
 import { Product } from "@/types/product";
 import { mockProducts } from "@/lib/mock-data";
-import {
-  findProductBySlug,
-  getProductUrl,
-  formatProductType,
-  formatComplianceStatus,
-} from "@/lib/utils";
+import { formatProductType, formatComplianceStatus } from "@/lib/utils";
 import { useMemo } from "react";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params.slug as string;
+  const productId = params.productId as string;
 
-  // Find the product by slug
+  // Find the product by ID
   const product = useMemo(() => {
-    return findProductBySlug(mockProducts, slug);
-  }, [slug]);
+    return mockProducts.find((p) => p.id === productId);
+  }, [productId]);
 
   if (!product) {
     return (
@@ -232,6 +227,162 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Product-specific attributes */}
+            <div>
+              <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+                Product Attributes
+              </h2>
+              <div className="bg-neutral-50 rounded-lg p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {product.type === "CreditCard" && (
+                    <>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Credit Limit Range
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          $
+                          {product.attributes.creditLimitRange.min.toLocaleString()}{" "}
+                          - $
+                          {product.attributes.creditLimitRange.max.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Annual Fee
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          ${product.attributes.annualFee}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Interest Rate APR
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.interestRateAPR}%
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Rewards Type
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.rewardsType}
+                        </dd>
+                      </div>
+                    </>
+                  )}
+
+                  {product.type === "PersonalLoan" && (
+                    <>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Loan Amount Range
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          $
+                          {product.attributes.loanAmountRange.min.toLocaleString()}{" "}
+                          - $
+                          {product.attributes.loanAmountRange.max.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Interest Rate APR
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.interestRateAPR}%
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Tenure Range
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.tenureRangeMonths.min} -{" "}
+                          {product.attributes.tenureRangeMonths.max} months
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Collateral Required
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.collateralRequired ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                    </>
+                  )}
+
+                  {product.type === "MicrofinanceLoan" && (
+                    <>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Loan Amount Range
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          $
+                          {product.attributes.loanAmountRange.min.toLocaleString()}{" "}
+                          - $
+                          {product.attributes.loanAmountRange.max.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Group Lending
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.groupLending ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Repayment Schedule
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.repaymentSchedule}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Financial Literacy Support
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.financialLiteracySupport
+                            ? "Yes"
+                            : "No"}
+                        </dd>
+                      </div>
+                    </>
+                  )}
+
+                  {product.type === "SavingsAccount" && (
+                    <>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Minimum Balance
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          $
+                          {product.attributes.minimumBalance?.toLocaleString() ||
+                            0}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+                          Interest Rate
+                        </dt>
+                        <dd className="mt-1 text-sm text-neutral-900">
+                          {product.attributes.interestRate}%
+                        </dd>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -265,7 +416,7 @@ export default function ProductDetailPage() {
                     <button
                       key={relatedProduct.id}
                       onClick={() => {
-                        router.push(getProductUrl(relatedProduct));
+                        router.push(`/products/${relatedProduct.id}`);
                       }}
                       className="w-full text-left p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
                     >

@@ -1,35 +1,20 @@
 import { Product, ProductType, ComplianceStatus } from "@/types/product";
 
 /**
- * Generates a URL-friendly slug from a product name
+ * Finds a product by its ID
  */
-export function generateProductSlug(productName: string): string {
-  return productName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-    .trim()
-    .replace(/\s+/g, "-"); // Replace spaces with hyphens
-}
-
-/**
- * Finds a product by its slug
- */
-export function findProductBySlug(
+export function findProductById(
   products: Product[],
-  slug: string
+  productId: string
 ): Product | undefined {
-  return products.find((product) => {
-    const productSlug = generateProductSlug(product.name);
-    return productSlug === slug;
-  });
+  return products.find((product) => product.id === productId);
 }
 
 /**
- * Gets the product detail URL using slug
+ * Gets the product detail URL using product ID
  */
 export function getProductUrl(product: Product): string {
-  const slug = generateProductSlug(product.name);
-  return `/products/${slug}`;
+  return `/products/${product.id}`;
 }
 
 /**
