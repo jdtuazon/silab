@@ -3,8 +3,12 @@ Application configuration settings
 """
 import os
 from typing import List
-from pydantic import BaseSettings
 from dotenv import load_dotenv
+
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
 
 load_dotenv()
 
@@ -37,5 +41,6 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Allow extra fields from environment
 
 settings = Settings()
