@@ -20,12 +20,12 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
 
 export const api = {
   get: (endpoint: string) => fetchApi(endpoint),
-  post: (endpoint: string, data: any) => 
+  post: (endpoint: string, data: unknown) => 
     fetchApi(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  put: (endpoint: string, data: any) => 
+  put: (endpoint: string, data: unknown) => 
     fetchApi(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
