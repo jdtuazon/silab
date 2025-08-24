@@ -5,11 +5,13 @@ import tempfile
 from fastapi import UploadFile
 import json
 
+from app.core.config import settings
+
 class R2RService:
     def __init__(self):
         # Try common R2R API ports
         api_ports = [7272, 8000, 8080, 7273]
-        self.base_url = os.getenv("R2R_BASE_URL", "http://localhost:7272")
+        self.base_url = settings.r2r_base_url
         
         # If no custom URL provided, detect the correct port
         if self.base_url == "http://localhost:7272":
@@ -88,28 +90,67 @@ class R2RService:
         except Exception as e:
             raise Exception(f"Document search failed: {str(e)}")
     
-    async def rag_completion(self, query: str, use_hybrid_search: bool = True) -> Dict[str, Any]:
-        """Get RAG completion for a query"""
+    async def rag_completion(self, query: str, use_hybrid_search: bool = True, task_prompt: Optional[str] = None) -> Dict[str, Any]:
+        """Get RAG completion using search + completion endpoint approach"""
         try:
-            # For now, return search results as RAG-like response
-            # until we find the correct R2R v3 completion endpoint
-            search_results = await self.search_documents(query, limit=5)
+            # First, get search results
+            search_results = await self.search_documents(query, limit=3)
+            search_chunks = search_results.get("results", [])
             
-            # Combine search results into a simple response
-            if search_results and "results" in search_results:
-                context = "\n\n".join([
-                    result.get("text", "") 
-                    for result in search_results["results"][:3]
-                ])
+            if not search_chunks:
                 return {
-                    "completion": f"Based on the documents, here's what I found about '{query}':\n\n{context}",
-                    "search_results": search_results["results"]
-                }
-            else:
-                return {
-                    "completion": f"I couldn't find relevant information about '{query}' in the documents.",
+                    "completion": "No relevant regulatory documents found for analysis.",
                     "search_results": []
                 }
+            
+            # Build context from search results
+            context_parts = []
+            for i, chunk in enumerate(search_chunks[:3], 1):
+                filename = chunk.get('metadata', {}).get('filename', 'Unknown document')
+                text = chunk.get('text', '')[:1000]  # Limit length
+                context_parts.append(f"DOCUMENT {i} ({filename}):\n{text}")
+            
+            context = "\n\n".join(context_parts)
+            
+            # Create system message and user message
+            system_msg = task_prompt or "You are a compliance analyst for Philippine financial regulations."
+            
+            user_msg = f"""COMPLIANCE ANALYSIS REQUEST
+
+FINANCIAL SERVICE FEATURE: "{query}"
+
+PHILIPPINE REGULATORY DOCUMENTS:
+{context}
+
+Please analyze if this feature violates any regulations in the provided documents. Respond in the exact format specified."""
+            
+            # Use completion endpoint with messages
+            payload = {
+                "messages": [
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg}
+                ],
+                "generation_config": {
+                    "model": "openai/gpt-4o-mini",
+                    "temperature": 0.1,
+                    "max_tokens": 500
+                }
+            }
+            
+            response = await self.client.post(
+                f"{self.base_url}/v3/retrieval/completion",
+                json=payload
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extract the completion
+            completion = result.get("results", {}).get("choices", [{}])[0].get("message", {}).get("content", "No response generated")
+            
+            return {
+                "completion": completion,
+                "search_results": search_chunks
+            }
             
         except Exception as e:
             raise Exception(f"RAG completion failed: {str(e)}")
