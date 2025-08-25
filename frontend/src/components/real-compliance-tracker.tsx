@@ -3,15 +3,12 @@
 import { useState, useEffect } from "react";
 import { UploadPanel } from "./upload-panel";
 import { DocumentViewer } from "./document-viewer";
-import { AnalysisPanel } from "./analysis-panel";
 import { SemanticAnalysisPanel } from "./semantic-analysis-panel";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Upload, FileText, BarChart3, Download, Keyboard } from "lucide-react";
+import { Upload, FileText, BarChart3, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
-  BackendAnalysisResponse,
   BackendViolationData,
   FrontendViolationData,
   AnalysisSummary,
@@ -126,8 +123,7 @@ export function RealComplianceTracker({
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>("");
-  const [showDebug, setShowDebug] = useState(false);
+  const [_, setDebugInfo] = useState<string>("");
 
   // New state for semantic analysis
   const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(
@@ -192,7 +188,6 @@ export function RealComplianceTracker({
       : null
   );
   const [selectedSection, setSelectedSection] = useState<any>(null);
-  const [showSemanticAnalysis, setShowSemanticAnalysis] = useState(true);
 
   const addDebugInfo = (info: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -200,6 +195,8 @@ export function RealComplianceTracker({
     console.log(`[DEBUG] ${info}`);
   };
 
+<<<<<<< HEAD
+=======
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const testConnection = async () => {
     addDebugInfo("🔍 Testing backend connection...");
@@ -296,6 +293,7 @@ export function RealComplianceTracker({
     });
   };
 
+>>>>>>> fe/jm/rebase
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -890,7 +888,7 @@ export function RealComplianceTracker({
             (a, b) => a.startLine - b.startLine
           );
 
-          sortedSections.forEach((section, index) => {
+          sortedSections.forEach((section) => {
             if (section.content) {
               reconstructedContent += section.content + "\n";
             } else if (section.text) {

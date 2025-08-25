@@ -8,7 +8,6 @@ import { ProductListItem } from "@/components/ui/product-list-item";
 import { CreateProductModal } from "@/components/ui/create-product-modal";
 import { AdvancedFilterModal } from "@/components/ui/advanced-filter-modal";
 import { mockProducts } from "@/lib/mock-data";
-import { Product, FilterState } from "@/types/product";
 import {
   Plus,
   Search,

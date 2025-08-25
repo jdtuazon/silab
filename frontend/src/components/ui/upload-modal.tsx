@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { LoaderCircle, X, CheckCircle } from "lucide-react";
 
 interface UploadModalProps {

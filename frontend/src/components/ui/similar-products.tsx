@@ -4,29 +4,16 @@ import { useState } from "react";
 import { Product } from "@/types/product";
 import {
   Search,
-  Filter,
   CheckCircle,
   AlertCircle,
   Download,
   Share2,
   Building,
   Calendar,
-  TrendingUp,
-  TrendingDown,
-  Target,
-  Copy,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
-  ArrowRight,
   Star,
-  Clock,
-  Users,
-  BarChart3,
-  Lightbulb,
-  ThumbsUp,
-  ThumbsDown,
   XCircle,
 } from "lucide-react";
 
@@ -38,6 +25,8 @@ export function SimilarProducts({ product }: SimilarProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchValue, setSearchValue] = useState("");
   const [sortBy, setSortBy] = useState("similarity");
+
+  console.log(product);
 
   // Mock similar products data
   const similarProducts = [

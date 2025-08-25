@@ -7,8 +7,6 @@ import {
   TrendingUp,
   Users,
   Zap,
-  CheckCircle,
-  Star,
   Globe,
   BarChart3,
   CreditCard,

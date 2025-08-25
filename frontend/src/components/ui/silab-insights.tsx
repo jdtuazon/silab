@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Product } from "@/types/product";
 import {
   TrendingUp,
@@ -8,7 +7,6 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-  Info,
   Download,
   Share2,
   ChevronDown,
@@ -138,19 +136,6 @@ export function SiLabInsights({
       status: "pending",
     },
   ];
-
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case "High":
-        return "text-error";
-      case "Medium":
-        return "text-warning";
-      case "Low":
-        return "text-success";
-      default:
-        return "text-muted-text";
-    }
-  };
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
