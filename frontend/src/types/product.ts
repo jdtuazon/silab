@@ -2,12 +2,7 @@
 export type ProductStatus = "in-dev" | "qa" | "prod" | "archived";
 
 // New product types based on financial products
-export type ProductType =
-  | "CreditCard"
-  | "PersonalLoan"
-  | "MicrofinanceLoan"
-  | "SavingsAccount";
-
+export type ProductType = "CreditCard" | "PersonalLoan" | "MicrofinanceLoan";
 // Compliance status
 export type ComplianceStatus =
   | "PendingReview"
