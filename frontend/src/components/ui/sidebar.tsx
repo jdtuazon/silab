@@ -1,6 +1,14 @@
 "use client";
 
-import { X, Home, Package, Settings, Users, BarChart3 } from "lucide-react";
+import {
+  X,
+  Home,
+  Package,
+  Settings,
+  Users,
+  BarChart3,
+  Newspaper,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,8 +20,7 @@ interface SidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Products", href: "/products", icon: Package },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Customers", href: "/customers", icon: Users },
+  { name: "Documents", href: "/documents", icon: Newspaper },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
