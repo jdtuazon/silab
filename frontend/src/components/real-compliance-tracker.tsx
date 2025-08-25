@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { UploadPanel } from "./upload-panel";
 import { DocumentViewer } from "./document-viewer";
 import { SemanticAnalysisPanel } from "./semantic-analysis-panel";
@@ -195,7 +195,7 @@ export function RealComplianceTracker({
     console.log(`[DEBUG] ${info}`);
   };
 
-  const startAnalysis = async () => {
+  const startAnalysis = useCallback(async () => {
     addDebugInfo("🚀 Starting analysis...");
     addDebugInfo(`Document content length: ${documentContent.length}`);
     addDebugInfo(`Document preview: ${documentContent.substring(0, 200)}`);
@@ -416,7 +416,7 @@ export function RealComplianceTracker({
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -457,6 +457,7 @@ export function RealComplianceTracker({
         description: `${file.name} is ready for analysis.`,
       });
     } catch (error) {
+      console.error("File upload error:", error);
       toast({
         title: "Upload failed",
         description: "There was an error reading the file. Please try again.",
