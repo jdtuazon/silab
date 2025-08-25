@@ -37,25 +37,25 @@ export default function LandingPage() {
               <div className="ml-10 flex items-baseline space-x-4">
                 <a
                   href="#features"
-                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-xl text-sm font-medium transition-colors"
                 >
                   Features
                 </a>
                 <a
                   href="#products"
-                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-xl text-sm font-medium transition-colors"
                 >
                   Products
                 </a>
                 <a
                   href="#about"
-                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-secondary-text hover:text-primary-text px-3 py-2 rounded-xl text-sm font-medium transition-colors"
                 >
                   About
                 </a>
                 <Link
                   href="/products"
-                  className="bg-primary hover:bg-primary-hover text-inverse px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="bg-primary hover:bg-primary-hover text-inverse px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                 >
                   Get Started
                 </Link>
@@ -81,14 +81,14 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/products"
-                className="inline-flex items-center px-8 py-3 bg-primary hover:bg-primary-hover text-inverse font-semibold rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                className="inline-flex items-center px-8 py-3 bg-primary hover:bg-primary-hover text-inverse font-semibold rounded-xl transition-colors shadow-lg hover:shadow-xl"
               >
                 Explore Products
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center px-8 py-3 border border-neutral-300 text-secondary-text hover:bg-neutral-50 font-semibold rounded-lg transition-colors"
+                className="inline-flex items-center px-8 py-3 border border-neutral-300 text-secondary-text hover:bg-neutral-50 font-semibold rounded-xl transition-colors"
               >
                 Learn More
               </a>
@@ -112,7 +112,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary-light rounded-lg flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-primary-light rounded-xl flex items-center justify-center mx-auto mb-6">
                 <Shield className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-primary-text mb-4">
@@ -125,7 +125,7 @@ export default function LandingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary-light rounded-lg flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-primary-light rounded-xl flex items-center justify-center mx-auto mb-6">
                 <BarChart3 className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-primary-text mb-4">

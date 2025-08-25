@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/ui/header";
 import { Sidebar } from "@/components/ui/sidebar";
 import { MarketOpportunity } from "@/components/ui/market-opportunity";
 import { SimilarProducts } from "@/components/ui/similar-products";
 import { VirtualPersonas } from "@/components/ui/virtual-personas";
 import { SiLabInsights } from "@/components/ui/silab-insights";
+import { RealComplianceTracker } from "@/components/real-compliance-tracker";
 import { mockProducts } from "@/lib/mock-data";
 import { Product } from "@/types/product";
 import {
@@ -38,6 +40,7 @@ import {
   Edit,
   Save,
   X,
+  ArrowLeft,
 } from "lucide-react";
 
 interface ProductDashboardProps {
@@ -48,8 +51,8 @@ type TopLevelTab = "synmarket" | "compliance";
 type SidebarTab = "opportunity" | "similar" | "personas" | "insights";
 
 export default function ProductDashboard({ params }: ProductDashboardProps) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
   const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>("synmarket");
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("opportunity");
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -135,8 +138,6 @@ export default function ProductDashboard({ params }: ProductDashboardProps) {
       {/* Header */}
       <Header
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
       />
 
       <div className="flex">
@@ -150,9 +151,17 @@ export default function ProductDashboard({ params }: ProductDashboardProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between py-4">
                 <div className="flex items-center space-x-8">
-                  <h1 className="text-2xl font-bold text-primary-text">
-                    {product.name}
-                  </h1>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => router.push("/products")}
+                      className="p-2 text-muted-text hover:text-primary transition-colors rounded-lg hover:bg-neutral-100"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-primary-text">
+                      {product.name}
+                    </h1>
+                  </div>
                   <div className="flex space-x-1">
                     <button
                       onClick={() => setTopLevelTab("synmarket")}
@@ -191,51 +200,43 @@ export default function ProductDashboard({ params }: ProductDashboardProps) {
           {/* Dashboard Content */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex gap-8">
-              {/* Left Sidebar Navigation */}
-              <div className="w-64 flex-shrink-0">
-                <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-4">
-                  <h3 className="text-sm font-semibold text-muted-text uppercase tracking-wider mb-4">
-                    Analysis Tools
-                  </h3>
-                  <div className="space-y-2">
-                    {sidebarTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setSidebarTab(tab.id as SidebarTab)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center ${
-                            sidebarTab === tab.id
-                              ? "bg-primary text-inverse shadow-lg"
-                              : "text-secondary-text hover:text-primary-text hover:bg-neutral-100"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 mr-3" />
-                          {tab.name}
-                        </button>
-                      );
-                    })}
+              {/* Left Sidebar Navigation - Only show for SynMarket view */}
+              {topLevelTab === "synmarket" && (
+                <div className="w-64 flex-shrink-0">
+                  <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-4">
+                    <h3 className="text-sm font-semibold text-muted-text uppercase tracking-wider mb-4">
+                      Analysis Tools
+                    </h3>
+                    <div className="space-y-2">
+                      {sidebarTabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setSidebarTab(tab.id as SidebarTab)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center ${
+                              sidebarTab === tab.id
+                                ? "bg-primary text-inverse shadow-lg"
+                                : "text-secondary-text hover:text-primary-text hover:bg-neutral-100"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 mr-3" />
+                            {tab.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Main Content Area */}
               <div className="flex-1">
                 {topLevelTab === "synmarket" ? (
                   renderMainContent()
                 ) : (
-                  <div className="bg-bg-primary rounded-xl border border-neutral-200 shadow-sm p-8 text-center">
-                    <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-primary-text mb-2">
-                      ComplianceGuard
-                    </h2>
-                    <p className="text-secondary-text mb-6">
-                      Advanced compliance monitoring and regulatory analysis
-                      tools.
-                    </p>
-                    <p className="text-muted-text">
-                      ComplianceGuard features coming soon...
-                    </p>
+                  <div className="h-full">
+                    <RealComplianceTracker viewOnly={true} />
                   </div>
                 )}
               </div>

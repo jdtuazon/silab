@@ -8,28 +8,158 @@ import { SemanticAnalysisPanel } from "./semantic-analysis-panel"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { Upload, FileText, BarChart3, Search, Download, Keyboard } from "lucide-react"
+import { Upload, FileText, BarChart3, Download, Keyboard } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { BackendAnalysisResponse, BackendViolationData, FrontendViolationData, AnalysisSummary } from "@/types/compliance"
 
 const API_BASE_URL = "http://localhost:8000"
 
-export function RealComplianceTracker() {
-  const [documentContent, setDocumentContent] = useState<string>("")
-  const [violations, setViolations] = useState<FrontendViolationData[]>([])
-  const [analysisSummary, setAnalysisSummary] = useState<AnalysisSummary | null>(null)
+interface RealComplianceTrackerProps {
+  viewOnly?: boolean
+}
+
+export function RealComplianceTracker({ viewOnly = false }: RealComplianceTrackerProps = {}) {
+  const [documentContent, setDocumentContent] = useState<string>(
+    viewOnly ? 
+    `Product Feature Specification
+    
+1. Digital Payment Processing
+   Our platform facilitates digital payments through secure API integrations.
+   
+2. Customer Data Collection
+   We collect customer information including personal identification details.
+   
+3. International Fund Transfers
+   The system supports cross-border money transfers with real-time processing.
+   
+4. Risk Assessment Module  
+   Automated risk scoring for all transactions based on transaction patterns.
+
+5. Compliance Reporting
+   Generate regulatory reports for BSP and SEC requirements.` : ""
+  )
+  const [violations, setViolations] = useState<FrontendViolationData[]>(
+    viewOnly ? [
+      {
+        id: "demo_violation_1",
+        lineNumber: 8,
+        startChar: 0,
+        endChar: 100,
+        severity: "high" as const,
+        violatedText: "We collect customer information including personal identification details.",
+        regulatorySource: {
+          law: "RA No. 10173",
+          section: "Data Privacy Act - Section 12",
+          document: "Data Privacy Act of 2012",
+          authority: "NPC",
+          directQuote: "Personal data must be collected for specified, explicit and legitimate purposes."
+        },
+        explanation: "Collection of personal data requires explicit consent and clear purpose statement.",
+        category: "DataPrivacy" as const
+      },
+      {
+        id: "demo_violation_2", 
+        lineNumber: 11,
+        startChar: 0,
+        endChar: 80,
+        severity: "medium" as const,
+        violatedText: "The system supports cross-border money transfers",
+        regulatorySource: {
+          law: "RA No. 9160",
+          section: "Anti-Money Laundering Act - Section 7",
+          document: "AMLA of 2001",
+          authority: "BSP",
+          directQuote: "Covered institutions shall establish customer due diligence measures."
+        },
+        explanation: "Cross-border transfers require enhanced due diligence and AML compliance measures.",
+        category: "AML" as const
+      }
+    ] : []
+  )
+  const [analysisSummary, setAnalysisSummary] = useState<AnalysisSummary | null>(
+    viewOnly ? {
+      complianceScore: 73,
+      totalViolations: 2,
+      linesAnalyzed: 12,
+      analysisDate: new Date().toISOString(),
+      violationsByCategory: {
+        "DataPrivacy": 1,
+        "AML": 1,
+        "Banking": 0,
+        "Securities": 0
+      },
+      violationsByAuthority: {
+        "NPC": 1,
+        "BSP": 1,
+        "SEC": 0
+      },
+      severityDistribution: {
+        "high": 1,
+        "medium": 1,
+        "low": 0
+      },
+      status: "NON-COMPLIANT" as const
+    } : null
+  )
   const [selectedViolation, setSelectedViolation] = useState<FrontendViolationData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [leftPanelOpen, setLeftPanelOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filteredViolations, setFilteredViolations] = useState<FrontendViolationData[]>([])
   const [debugInfo, setDebugInfo] = useState<string>("")
   const [showDebug, setShowDebug] = useState(false)
   
   // New state for semantic analysis
-  const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(null)
+  const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(
+    viewOnly ? {
+      document_name: "Product Feature Specification",
+      analysis_date: new Date().toISOString(),
+      analysis_type: "semantic_section_analysis", 
+      total_sections_analyzed: 5,
+      sections_with_violations: 2,
+      total_violations: 2,
+      section_analyses: [
+        {
+          sectionTitle: "Customer Data Collection",
+          sectionType: "data_privacy",
+          startLine: 8,
+          endLine: 9,
+          status: "VIOLATION",
+          violationCount: 1,
+          sectionAnalysis: "This section collects personal data without specifying explicit consent mechanisms.",
+          violationDetails: ["Missing explicit consent requirements for personal data collection"],
+          businessImpact: "High risk of NPC penalties and customer trust issues",
+          regulatoryRisk: "Potential enforcement action by National Privacy Commission"
+        },
+        {
+          sectionTitle: "International Fund Transfers", 
+          sectionType: "compliance",
+          startLine: 11,
+          endLine: 12,
+          status: "VIOLATION",
+          violationCount: 1,
+          sectionAnalysis: "Cross-border transfers require enhanced AML compliance measures.",
+          violationDetails: ["Missing enhanced due diligence requirements for international transfers"],
+          businessImpact: "Moderate risk of BSP regulatory action",
+          regulatoryRisk: "BSP may require additional compliance measures"
+        },
+        {
+          sectionTitle: "Risk Assessment Module",
+          sectionType: "feature", 
+          startLine: 14,
+          endLine: 15,
+          status: "COMPLIANT",
+          violationCount: 0,
+          sectionAnalysis: "Risk assessment functionality aligns with regulatory requirements."
+        }
+      ],
+      regulatory_summary: {
+        compliance_score: 73,
+        status: "NON-COMPLIANT",
+        domains_affected: ["Data Privacy", "Anti-Money Laundering"]
+      }
+    } : null
+  )
   const [selectedSection, setSelectedSection] = useState<any>(null)
   const [showSemanticAnalysis, setShowSemanticAnalysis] = useState(true)
 
@@ -143,11 +273,6 @@ export function RealComplianceTracker() {
               startAnalysis()
             }
             break
-          case "f":
-            e.preventDefault()
-            const searchInput = document.querySelector("[data-search-input]") as HTMLInputElement
-            searchInput?.focus()
-            break
         }
       }
       if (e.key === "Escape") {
@@ -161,19 +286,6 @@ export function RealComplianceTracker() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [documentContent])
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredViolations(violations)
-    } else {
-      const filtered = violations.filter(
-        (violation) =>
-          violation.violatedText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          violation.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          violation.regulatorySource.law.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-      setFilteredViolations(filtered)
-    }
-  }, [violations, searchQuery])
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -481,6 +593,142 @@ export function RealComplianceTracker() {
     setRightPanelOpen(true)
   }
 
+  const handleSectionSelect = (section: any) => {
+    setSelectedSection(section)
+    setRightPanelOpen(true) // Open the right panel on mobile
+  }
+
+  const handleJsonUpload = (jsonData: any) => {
+    addDebugInfo(`📁 JSON analysis file uploaded: ${JSON.stringify(Object.keys(jsonData))}`)
+    
+    try {
+      // Store the semantic analysis data
+      setSemanticAnalysisData(jsonData)
+      
+      // Transform data for compatibility
+      let frontendViolations: FrontendViolationData[] = []
+      let totalViolations = 0
+      let linesAnalyzed = 0
+      let complianceScore = 100
+      
+      if (jsonData.section_analyses) {
+        // NEW FORMAT: Semantic section analysis
+        addDebugInfo(`🔄 Processing JSON semantic sections: ${jsonData.section_analyses?.length || 0} sections`)
+        frontendViolations = transformSectionAnalysesToViolations(jsonData.section_analyses || [])
+        
+        totalViolations = jsonData.total_violations || frontendViolations.length
+        linesAnalyzed = jsonData.total_sections_analyzed || 0
+        complianceScore = jsonData.regulatory_summary?.compliance_score || 100
+        
+      } else if (jsonData.analysis_results) {
+        // LEGACY FORMAT: Line-by-line analysis
+        addDebugInfo(`🔄 Processing JSON legacy format: ${jsonData.analysis_results?.length || 0} items`)
+        frontendViolations = transformBackendToFrontend(jsonData.analysis_results || [])
+        
+        totalViolations = frontendViolations.length
+        linesAnalyzed = jsonData.analysis_results?.length || 0
+        complianceScore = linesAnalyzed > 0 ? Math.max(0, Math.round(((linesAnalyzed - totalViolations) / linesAnalyzed) * 100)) : 100
+      }
+      
+      const violationsByCategory = frontendViolations.reduce((acc, violation) => {
+        acc[violation.category] = (acc[violation.category] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+
+      const violationsByAuthority = frontendViolations.reduce((acc, violation) => {
+        acc[violation.regulatorySource.authority] = (acc[violation.regulatorySource.authority] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+
+      const severityDistribution = frontendViolations.reduce((acc, violation) => {
+        acc[violation.severity] = (acc[violation.severity] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+
+      const summary: AnalysisSummary = {
+        complianceScore,
+        totalViolations,
+        linesAnalyzed,
+        analysisDate: jsonData.analysis_date || new Date().toISOString(),
+        violationsByCategory,
+        violationsByAuthority,
+        severityDistribution,
+        status: totalViolations > 0 ? "NON-COMPLIANT" : "COMPLIANT"
+      }
+
+      setViolations(frontendViolations)
+      setAnalysisSummary(summary)
+      
+      // Set document content if available in various possible fields
+      let documentText = ""
+      let reconstructedContent = ""
+      
+      // Check for document content in various possible fields
+      const possibleContentFields = [
+        'document_content',
+        'content', 
+        'original_content',
+        'text',
+        'document_text',
+        'original_document',
+        'source_content',
+        'raw_content'
+      ]
+      
+      for (const field of possibleContentFields) {
+        if (jsonData[field] && typeof jsonData[field] === 'string' && jsonData[field].trim().length > 0) {
+          documentText = jsonData[field].trim()
+          addDebugInfo(`📄 Found document content in field: ${field} (${documentText.length} chars)`)
+          break
+        }
+      }
+      
+      if (documentText) {
+        setDocumentContent(documentText)
+        addDebugInfo(`📄 Document content loaded: ${documentText.length} characters`)
+      } else {
+        addDebugInfo(`⚠️ No document content found in JSON - checking section_analyses for content reconstruction`)
+        
+        // Try to reconstruct document from section analyses
+        if (jsonData.section_analyses && jsonData.section_analyses.length > 0) {
+          // Sort sections by line number and try to reconstruct
+          const sortedSections = [...jsonData.section_analyses].sort((a, b) => a.startLine - b.startLine)
+          
+          sortedSections.forEach((section, index) => {
+            if (section.content) {
+              reconstructedContent += section.content + "\n"
+            } else if (section.text) {
+              reconstructedContent += section.text + "\n"
+            } else {
+              // Add a placeholder based on section info
+              reconstructedContent += `[Section: ${section.sectionTitle}]\n[Lines ${section.startLine}-${section.endLine}]\n[Type: ${section.sectionType}]\n\n`
+            }
+          })
+          
+          if (reconstructedContent.trim()) {
+            setDocumentContent(reconstructedContent.trim())
+            addDebugInfo(`🔧 Document content reconstructed from sections: ${reconstructedContent.length} characters`)
+          }
+        }
+      }
+      
+      addDebugInfo(`✅ JSON analysis loaded: ${totalViolations} violations, ${complianceScore}% compliance`)
+      
+      toast({
+        title: "Analysis loaded from JSON",
+        description: `Loaded ${totalViolations} violations with ${complianceScore}% compliance score${documentText || reconstructedContent ? ' and document content' : ''}.`,
+      })
+      
+    } catch (error) {
+      addDebugInfo(`❌ Error processing JSON: ${error instanceof Error ? error.message : String(error)}`)
+      toast({
+        title: "JSON processing failed",
+        description: "There was an error processing the uploaded JSON file.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleExportReport = () => {
     if (!analysisSummary) {
       toast({
@@ -514,14 +762,14 @@ export function RealComplianceTracker() {
   }
 
   return (
-    <div className="h-[calc(100vh-200px)]">
-      <div className="lg:hidden flex flex-col gap-3 p-4 border-b border-border bg-card">
+    <div className="h-full w-full flex flex-col">
+      <div className="lg:hidden flex flex-col gap-3 p-3 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40 flex-shrink-0">
         <div className="flex items-center justify-between">
           <Sheet open={leftPanelOpen} onOpenChange={setLeftPanelOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                <span className="hidden xs:inline">Upload</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-full sm:w-96 p-0">
@@ -533,25 +781,32 @@ export function RealComplianceTracker() {
                   isAnalyzing={isAnalyzing}
                   analysisProgress={analysisProgress}
                   documentContent={documentContent}
+                  onJsonUpload={handleJsonUpload}
                 />
               </div>
             </SheetContent>
           </Sheet>
 
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <span className="font-medium text-foreground">Document Analysis</span>
+          <div className="flex items-center gap-2 min-w-0 flex-1 mx-3">
+            <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="font-medium text-foreground text-sm truncate">Document Analysis</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportReport} disabled={!analysisSummary}>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportReport} 
+              disabled={!analysisSummary}
+              className="p-2"
+            >
               <Download className="h-4 w-4" />
             </Button>
             <Sheet open={rightPanelOpen} onOpenChange={setRightPanelOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analysis
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden xs:inline">Analysis</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:w-96 p-0">
@@ -568,23 +823,12 @@ export function RealComplianceTracker() {
           </div>
         </div>
 
-        {violations.length > 0 && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              data-search-input
-              placeholder="Search violations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        )}
       </div>
 
-      <div className="h-full lg:grid lg:grid-cols-12 lg:gap-6 lg:p-6">
-        <div className="hidden lg:block lg:col-span-3">
-          <div className="space-y-4">
+      <div className="flex-1 min-h-0 flex flex-col lg:p-4">
+        {/* Top Control Bar - Desktop Only (hidden in view-only mode) */}
+        {!viewOnly && (
+          <div className="hidden lg:flex items-center justify-between mb-4 p-3 bg-muted/30 rounded-lg flex-shrink-0">
             <UploadPanel
               onFileUpload={handleFileUpload}
               onTextInput={handleTextInput}
@@ -592,99 +836,89 @@ export function RealComplianceTracker() {
               isAnalyzing={isAnalyzing}
               analysisProgress={analysisProgress}
               documentContent={documentContent}
+              onJsonUpload={handleJsonUpload}
+              compact={true}
             />
-
+            
             {violations.length > 0 && (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    data-search-input
-                    placeholder="Search violations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportReport}
-                  disabled={!analysisSummary}
-                  className="w-full bg-transparent"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportReport}
+                disabled={!analysisSummary}
+                className="ml-4"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
             )}
+          </div>
+        )}
 
-            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2 font-medium">
-                <Keyboard className="h-3 w-3" />
-                Keyboard Shortcuts
-              </div>
-              <div>Ctrl+U: Upload</div>
-              <div>Ctrl+R: Analyze</div>
-              <div>Ctrl+F: Search</div>
-              <div>Esc: Close panels</div>
-            </div>
+        {/* Main Content Area */}
+        <div className="flex-1 min-h-0 flex lg:gap-4">
+          <div className="flex-1 min-h-0 lg:mx-0 mx-4 mb-4 lg:mb-0">
+            <DocumentViewer
+              content={documentContent}
+              violations={violations}
+              onViolationClick={handleViolationClick}
+              selectedViolation={selectedViolation}
+              semanticAnalysisData={semanticAnalysisData}
+              selectedSection={selectedSection}
+              onSectionSelect={handleSectionSelect}
+            />
+          </div>
 
-            {/* Debug Panel */}
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDebug(!showDebug)}
-                className="w-full text-xs"
-              >
-                {showDebug ? "Hide" : "Show"} Debug Info
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={testConnection}
-                className="w-full text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-              >
-                🔍 Test Backend Connection
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={testEndpoints}
-                className="w-full text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-              >
-                🧪 Find API Endpoints
-              </Button>
-              
-              {showDebug && (
-                <div className="bg-neutral-900 text-green-400 p-3 rounded-lg text-xs font-mono max-h-60 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap">{debugInfo || "No debug info yet..."}</pre>
-                </div>
-              )}
+          <div className="hidden lg:flex lg:flex-col lg:w-96 lg:flex-shrink-0">
+            <div className="flex-1 min-h-0">
+              <SemanticAnalysisPanel
+                analysisData={semanticAnalysisData}
+                selectedSection={selectedSection}
+                onBackToOverview={() => setSelectedSection(null)}
+                onSectionSelect={(section) => setSelectedSection(section)}
+              />
             </div>
           </div>
         </div>
 
-        <div className="h-full lg:col-span-6 lg:px-0 px-4 pb-4 lg:pb-0">
-          <DocumentViewer
-            content={documentContent}
-            violations={filteredViolations}
-            onViolationClick={handleViolationClick}
-            selectedViolation={selectedViolation}
-          />
+        {/* Debug Panel - Commented out but kept for future debugging
+        <div className="hidden lg:block mt-4">
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs"
+            >
+              {showDebug ? "Hide" : "Show"} Debug Info
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={testConnection}
+              className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 ml-2"
+            >
+              🔍 Test Backend Connection
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={testEndpoints}
+              className="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 ml-2"
+            >
+              🧪 Find API Endpoints
+            </Button>
+            
+            {showDebug && (
+              <div className="bg-neutral-900 text-green-400 p-3 rounded-lg text-xs font-mono max-h-60 overflow-y-auto mt-2">
+                <pre className="whitespace-pre-wrap">{debugInfo || "No debug info yet..."}</pre>
+              </div>
+            )}
+          </div>
         </div>
-
-        <div className="hidden lg:block lg:col-span-3">
-          <SemanticAnalysisPanel
-            analysisData={semanticAnalysisData}
-            selectedSection={selectedSection}
-            onBackToOverview={() => setSelectedSection(null)}
-            onSectionSelect={(section) => setSelectedSection(section)}
-          />
-        </div>
+        */}
       </div>
     </div>
   )

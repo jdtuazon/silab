@@ -165,7 +165,7 @@ export function SemanticAnalysisPanel({
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 overflow-auto p-6 space-y-6">
+        <CardContent className="flex-1 min-h-0 overflow-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {/* Section Analysis */}
           <div>
             <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
@@ -283,22 +283,19 @@ export function SemanticAnalysisPanel({
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full max-h-[calc(100vh-180px)] flex flex-col">
       <CardHeader className="flex-shrink-0 border-b">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl">Compliance Analysis Results</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-xl truncate">Compliance Analysis Results</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1 truncate">
               {analysisData.document_name} • {new Date(analysisData.analysis_date).toLocaleDateString()}
             </p>
           </div>
-          <Badge variant="outline" className="shrink-0">
-            {analysisData.analysis_type.replace('_', ' ')}
-          </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto p-6 space-y-6">
+      <CardContent className="flex-1 min-h-0 overflow-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {/* Overall Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -388,21 +385,21 @@ export function SemanticAnalysisPanel({
         <div>
           <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Section-by-Section Analysis ({analysisData.section_analyses.length})
+            Analysis Results ({analysisData.section_analyses.length})
           </h3>
           
           <div className="space-y-3">
             {analysisData.section_analyses.map((section, index) => (
               <Card key={index} className={cn(
-                "cursor-pointer transition-all hover:shadow-md",
+                "cursor-pointer transition-all hover:shadow-md overflow-hidden",
                 section.status === "VIOLATION" ? "border-red-200" : "border-green-200"
               )}>
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="space-y-3 cursor-pointer" onClick={() => onSectionSelect(section)}>
+                    <div className="flex items-start gap-3">
                       {getSectionTypeIcon(section.sectionType)}
-                      <div>
-                        <h4 className="font-medium">{section.sectionTitle}</h4>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{section.sectionTitle}</h4>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge 
                             variant="outline" 
@@ -416,27 +413,21 @@ export function SemanticAnalysisPanel({
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {section.status === "VIOLATION" ? (
-                        <Badge variant="destructive" className="shrink-0">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          {section.violationCount} violations
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="shrink-0 border-green-200 text-green-700">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Compliant
-                        </Badge>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => onSectionSelect(section)}
-                        className="p-2 h-8"
-                      >
-                        View Details
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        {section.status === "VIOLATION" ? (
+                          <Badge variant="destructive" className="text-xs">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            {section.violationCount} violations
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs border-green-200 text-green-700">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Compliant
+                          </Badge>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                 </CardHeader>

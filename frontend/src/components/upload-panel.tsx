@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Upload, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { Upload, Loader2, CheckCircle, AlertCircle, FileJson } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface UploadPanelProps {
@@ -17,6 +17,8 @@ interface UploadPanelProps {
   isAnalyzing: boolean
   analysisProgress: number
   documentContent: string
+  onJsonUpload?: (jsonData: any) => void
+  compact?: boolean
 }
 
 export function UploadPanel({
@@ -26,12 +28,20 @@ export function UploadPanel({
   isAnalyzing,
   analysisProgress,
   documentContent,
+  onJsonUpload,
+  compact = false,
 }: UploadPanelProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [textInput, setTextInput] = useState("")
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // JSON upload states
+  const [jsonFile, setJsonFile] = useState<File | null>(null)
+  const [jsonError, setJsonError] = useState<string | null>(null)
+  const [jsonDragOver, setJsonDragOver] = useState(false)
+  const jsonInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -96,7 +106,178 @@ export function UploadPanel({
     setUploadError(null)
   }
 
+  // JSON upload handlers
+  const handleJsonDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setJsonDragOver(true)
+  }
+
+  const handleJsonDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setJsonDragOver(false)
+  }
+
+  const handleJsonDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setJsonDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const file = files[0]
+    
+    if (file) {
+      validateAndUploadJson(file)
+    }
+  }
+
+  const handleJsonSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      validateAndUploadJson(file)
+    }
+  }
+
+  const validateAndUploadJson = async (file: File) => {
+    setJsonError(null)
+    
+    // Check if it's a JSON file
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      setJsonError("Please select a JSON file")
+      return
+    }
+    
+    // Check file size (5MB limit for JSON)
+    if (file.size > 5 * 1024 * 1024) {
+      setJsonError("JSON file too large (max 5MB)")
+      return
+    }
+    
+    try {
+      const text = await file.text()
+      const jsonData = JSON.parse(text)
+      
+      // Basic validation - check if it looks like our analysis format
+      if (!jsonData.section_analyses && !jsonData.analysis_results) {
+        setJsonError("Invalid analysis JSON format")
+        return
+      }
+      
+      setJsonFile(file)
+      if (onJsonUpload) {
+        onJsonUpload(jsonData)
+      }
+    } catch (error) {
+      setJsonError("Invalid JSON file")
+    }
+  }
+
   const canAnalyze = documentContent.trim().length > 0 && !isAnalyzing
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        {/* Compact File Upload */}
+        <div
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 border border-dashed rounded-md text-sm cursor-pointer transition-all",
+            isDragOver ? "border-accent bg-accent/5" : "border-border hover:border-accent/50",
+            uploadedFile && !uploadError && "border-green-400 bg-green-50",
+            uploadError && "border-red-400 bg-red-50"
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.pdf,.docx"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
+          {uploadError ? (
+            <AlertCircle className="h-4 w-4 text-red-500" />
+          ) : uploadedFile ? (
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          ) : (
+            <Upload className="h-4 w-4 text-muted-foreground" />
+          )}
+          
+          <span className="text-foreground">
+            {uploadError ? "Upload Error" 
+             : uploadedFile ? uploadedFile.name
+             : "Upload Document"}
+          </span>
+        </div>
+
+        {/* Compact JSON Upload */}
+        {onJsonUpload && (
+          <div
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 border border-dashed rounded-md text-sm cursor-pointer transition-all",
+              jsonDragOver ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-blue-300",
+              jsonFile && !jsonError && "border-blue-400 bg-blue-50",
+              jsonError && "border-red-300 bg-red-50"
+            )}
+            onDragOver={handleJsonDragOver}
+            onDragLeave={handleJsonDragLeave}
+            onDrop={handleJsonDrop}
+            onClick={() => jsonInputRef.current?.click()}
+          >
+            <input
+              ref={jsonInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleJsonSelect}
+              className="hidden"
+            />
+            
+            {jsonError ? (
+              <AlertCircle className="h-4 w-4 text-red-500" />
+            ) : jsonFile ? (
+              <CheckCircle className="h-4 w-4 text-blue-600" />
+            ) : (
+              <FileJson className="h-4 w-4 text-blue-600" />
+            )}
+            
+            <span className="text-foreground">
+              {jsonError ? "JSON Error"
+               : jsonFile ? jsonFile.name
+               : "Load JSON"}
+            </span>
+          </div>
+        )}
+
+        {/* Compact Analyze Button */}
+        <Button
+          onClick={onAnalyze}
+          disabled={!canAnalyze}
+          size="sm"
+          className="whitespace-nowrap"
+        >
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            "Analyze"
+          )}
+        </Button>
+
+        {/* Analysis Progress */}
+        {isAnalyzing && (
+          <div className="flex items-center gap-2 min-w-0">
+            <Progress value={analysisProgress} className="h-2 w-20" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {Math.round(analysisProgress)}%
+            </span>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -151,29 +332,70 @@ export function UploadPanel({
               </div>
             )}
           </div>
-
-          {/* Text Input Alternative */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Or paste your document text:</label>
-            <Textarea
-              placeholder="Paste your document content here for analysis..."
-              value={textInput}
-              onChange={(e) => handleTextChange(e.target.value)}
-              className="min-h-[120px] resize-none transition-all duration-200 focus:ring-2 focus:ring-accent/20"
-            />
-            {textInput && (
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{textInput.length} characters</span>
-                <span
-                  className={cn("font-medium", textInput.length > 100 ? "text-compliant" : "text-muted-foreground")}
-                >
-                  {textInput.length > 100 ? "Ready for analysis" : "Need more content"}
-                </span>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
+
+      {/* JSON Upload Section */}
+      {onJsonUpload && (
+        <Card className="border-dashed border-blue-200">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <FileJson className="h-4 w-4 text-blue-600" />
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-foreground">Load Analysis Results</h4>
+                <p className="text-xs text-muted-foreground">Upload a previously saved JSON analysis file</p>
+              </div>
+            </div>
+            
+            <div
+              className={cn(
+                "border border-dashed rounded-md p-3 text-center transition-all duration-200 cursor-pointer",
+                jsonDragOver ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-blue-300",
+                jsonFile && !jsonError && "border-blue-400 bg-blue-50",
+                jsonError && "border-red-300 bg-red-50"
+              )}
+              onDragOver={handleJsonDragOver}
+              onDragLeave={handleJsonDragLeave}
+              onDrop={handleJsonDrop}
+              onClick={() => jsonInputRef.current?.click()}
+            >
+              <input
+                ref={jsonInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleJsonSelect}
+                className="hidden"
+              />
+              
+              {jsonError ? (
+                <div className="space-y-1">
+                  <AlertCircle className="h-5 w-5 mx-auto text-red-500" />
+                  <p className="text-xs text-red-600">{jsonError}</p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 text-xs"
+                    onClick={(e) => { e.stopPropagation(); setJsonError(null); setJsonFile(null); }}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : jsonFile ? (
+                <div className="space-y-1">
+                  <CheckCircle className="h-5 w-5 mx-auto text-blue-600" />
+                  <p className="text-xs font-medium text-blue-700">{jsonFile.name}</p>
+                  <p className="text-xs text-blue-600">Analysis loaded</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <FileJson className="h-5 w-5 mx-auto text-gray-400" />
+                  <p className="text-xs text-gray-600">Drop JSON or click to browse</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Analysis Controls */}
       <Card>
@@ -219,33 +441,24 @@ export function UploadPanel({
       </Card>
 
       {/* Document Info */}
-      {(uploadedFile || textInput) && !uploadError && (
+      {(uploadedFile) && !uploadError && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Document Info</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {uploadedFile ? (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Filename:</span>
-                  <span className="text-foreground font-medium">{uploadedFile.name}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Size:</span>
-                  <span className="text-foreground">{(uploadedFile.size / 1024).toFixed(1)} KB</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Type:</span>
-                  <span className="text-foreground">{uploadedFile.type || "Document"}</span>
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Text Length:</span>
-                <span className="text-foreground">{textInput.length} characters</span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Filename:</span>
+              <span className="text-foreground font-medium">{uploadedFile.name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Size:</span>
+              <span className="text-foreground">{(uploadedFile.size / 1024).toFixed(1)} KB</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Type:</span>
+              <span className="text-foreground">{uploadedFile.type || "Document"}</span>
+            </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Upload Time:</span>
               <span className="text-foreground">{new Date().toLocaleTimeString()}</span>
