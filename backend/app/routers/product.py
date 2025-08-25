@@ -1,6 +1,9 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel, Field
+from ..services.product_extractor import ProductExtractor
 from ..models.product import (
     Product, ProductType, ComplianceStatus, RewardsType,
     TargetSegment, DistributionChannel, LoanPurpose,
@@ -96,28 +99,95 @@ class ProductSchema(BaseModel):
             }
         }
 
+def _serialize_amount_range(amount_range) -> dict:
+    """Serialize AmountRange embedded document"""
+    if not amount_range:
+        return None
+    return {
+        "min": amount_range.min,
+        "max": amount_range.max
+    }
+
+def _serialize_tenure_range(tenure_range) -> dict:
+    """Serialize TenureRange embedded document"""
+    if not tenure_range:
+        return None
+    return {
+        "min": tenure_range.min,
+        "max": tenure_range.max
+    }
+
+def _serialize_credit_card_attributes(attrs) -> dict:
+    """Serialize CreditCardAttributes embedded document"""
+    if not attrs:
+        return None
+    return {
+        "credit_limit_range": _serialize_amount_range(attrs.credit_limit_range),
+        "annual_fee": attrs.annual_fee,
+        "interest_rate_apr": attrs.interest_rate_apr,
+        "rewards_type": attrs.rewards_type,
+        "target_segment": [str(segment) for segment in attrs.target_segment],
+        "distribution_channel": [str(channel) for channel in attrs.distribution_channel]
+    }
+
+def _serialize_personal_loan_attributes(attrs) -> dict:
+    """Serialize PersonalLoanAttributes embedded document"""
+    if not attrs:
+        return None
+    return {
+        "loan_amount_range": _serialize_amount_range(attrs.loan_amount_range),
+        "interest_rate_apr": attrs.interest_rate_apr,
+        "tenure_range_months": _serialize_tenure_range(attrs.tenure_range_months),
+        "collateral_required": attrs.collateral_required,
+        "purpose": [str(purpose) for purpose in attrs.purpose],
+        "distribution_channel": [str(channel) for channel in attrs.distribution_channel]
+    }
+
+def _serialize_microfinance_loan_attributes(attrs) -> dict:
+    """Serialize MicrofinanceLoanAttributes embedded document"""
+    if not attrs:
+        return None
+    return {
+        "loan_amount_range": _serialize_amount_range(attrs.loan_amount_range),
+        "group_lending": attrs.group_lending,
+        "collateral_required": attrs.collateral_required,
+        "repayment_schedule": str(attrs.repayment_schedule),
+        "distribution_channel": [str(channel) for channel in attrs.distribution_channel],
+        "target_demographics": [str(demographic) for demographic in attrs.target_demographics],
+        "financial_literacy_support": attrs.financial_literacy_support
+    }
+
+def _serialize_savings_account_attributes(attrs) -> dict:
+    """Serialize SavingsAccountAttributes embedded document"""
+    if not attrs:
+        return None
+    return {
+        "minimum_balance": attrs.minimum_balance,
+        "interest_rate": attrs.interest_rate
+    }
+
 def _map_product_to_response(product: Product) -> dict:
     """Map a Product document to a response dictionary"""
     response = {
         "id": str(product.id),
         "name": product.name,
-        "type": product.type,
+        "type": str(product.type),
         "description": product.description,
         "target_personas": product.target_personas,
-        "compliance_status": product.compliance_status,
-        "created_at": product.created_at,
-        "updated_at": product.updated_at,
+        "compliance_status": str(product.compliance_status),
+        "created_at": product.created_at.isoformat() if product.created_at else None,
+        "updated_at": product.updated_at.isoformat() if product.updated_at else None,
     }
 
     # Add type-specific attributes
-    if product.type == ProductType.CREDIT_CARD and product.credit_card_attributes:
-        response["credit_card_attributes"] = product.credit_card_attributes
-    elif product.type == ProductType.PERSONAL_LOAN and product.personal_loan_attributes:
-        response["personal_loan_attributes"] = product.personal_loan_attributes
-    elif product.type == ProductType.MICROFINANCE_LOAN and product.microfinance_loan_attributes:
-        response["microfinance_loan_attributes"] = product.microfinance_loan_attributes
-    elif product.type == ProductType.SAVINGS_ACCOUNT and product.savings_account_attributes:
-        response["savings_account_attributes"] = product.savings_account_attributes
+    if product.type == ProductType.CREDIT_CARD:
+        response["credit_card_attributes"] = _serialize_credit_card_attributes(product.credit_card_attributes)
+    elif product.type == ProductType.PERSONAL_LOAN:
+        response["personal_loan_attributes"] = _serialize_personal_loan_attributes(product.personal_loan_attributes)
+    elif product.type == ProductType.MICROFINANCE_LOAN:
+        response["microfinance_loan_attributes"] = _serialize_microfinance_loan_attributes(product.microfinance_loan_attributes)
+    elif product.type == ProductType.SAVINGS_ACCOUNT:
+        response["savings_account_attributes"] = _serialize_savings_account_attributes(product.savings_account_attributes)
 
     return response
 
@@ -125,50 +195,57 @@ def _map_product_to_response(product: Product) -> dict:
 async def create_product(product: ProductSchema):
     """Create a new financial product"""
     try:
-        # Create the product with base fields
-        new_product = Product(
-            name=product.name,
-            type=product.type,
-            description=product.description,
-            target_personas=product.target_personas,
-            compliance_status=product.compliance_status,
-        )
+        def save_product():
+            # Create the product with base fields
+            new_product = Product(
+                name=product.name,
+                type=product.type,
+                description=product.description,
+                target_personas=product.target_personas,
+                compliance_status=product.compliance_status,
+            )
 
-        # Add type-specific attributes
-        if product.type == ProductType.CREDIT_CARD:
-            if not product.credit_card_attributes:
-                raise HTTPException(
-                    status_code=400,
-                    detail="credit_card_attributes required for CreditCard type"
+            # Add type-specific attributes
+            if product.type == ProductType.CREDIT_CARD:
+                if not product.credit_card_attributes:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="credit_card_attributes required for CreditCard type"
+                    )
+                new_product.credit_card_attributes = CreditCardAttributes(
+                    **product.credit_card_attributes.dict()
                 )
-            new_product.credit_card_attributes = CreditCardAttributes(
-                **product.credit_card_attributes.dict()
-            )
-        elif product.type == ProductType.PERSONAL_LOAN:
-            if not product.personal_loan_attributes:
-                raise HTTPException(
-                    status_code=400,
-                    detail="personal_loan_attributes required for PersonalLoan type"
+            elif product.type == ProductType.PERSONAL_LOAN:
+                if not product.personal_loan_attributes:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="personal_loan_attributes required for PersonalLoan type"
+                    )
+                new_product.personal_loan_attributes = PersonalLoanAttributes(
+                    **product.personal_loan_attributes.dict()
                 )
-            new_product.personal_loan_attributes = PersonalLoanAttributes(
-                **product.personal_loan_attributes.dict()
-            )
-        elif product.type == ProductType.MICROFINANCE_LOAN:
-            if not product.microfinance_loan_attributes:
-                raise HTTPException(
-                    status_code=400,
-                    detail="microfinance_loan_attributes required for MicrofinanceLoan type"
+            elif product.type == ProductType.MICROFINANCE_LOAN:
+                if not product.microfinance_loan_attributes:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="microfinance_loan_attributes required for MicrofinanceLoan type"
+                    )
+                new_product.microfinance_loan_attributes = MicrofinanceLoanAttributes(
+                    **product.microfinance_loan_attributes.dict()
                 )
-            new_product.microfinance_loan_attributes = MicrofinanceLoanAttributes(
-                **product.microfinance_loan_attributes.dict()
-            )
-        elif product.type == ProductType.SAVINGS_ACCOUNT:
-            if product.savings_account_attributes:
-                new_product.savings_account_attributes = SavingsAccountAttributes(
-                    **product.savings_account_attributes.dict()
-                )
+            elif product.type == ProductType.SAVINGS_ACCOUNT:
+                if product.savings_account_attributes:
+                    new_product.savings_account_attributes = SavingsAccountAttributes(
+                        **product.savings_account_attributes.dict()
+                    )
 
-        new_product.save()
+            new_product.save()
+            return new_product
+
+        # Run the synchronous mongoengine operation in a thread pool
+        with ThreadPoolExecutor() as executor:
+            new_product = await asyncio.get_event_loop().run_in_executor(executor, save_product)
+            
         return _map_product_to_response(new_product)
 
     except Exception as e:
@@ -183,16 +260,26 @@ async def list_products(
 ):
     """List financial products with optional filtering"""
     try:
-        # Build query filters
-        filters = {}
-        if type:
-            filters["type"] = type
-        if compliance_status:
-            filters["compliance_status"] = compliance_status
+        from concurrent.futures import ThreadPoolExecutor
+        from functools import partial
 
-        # Execute query with pagination
-        products = Product.objects(**filters).skip(skip).limit(limit)
-        return [_map_product_to_response(product) for product in products]
+        def fetch_products():
+            # Build query filters
+            filters = {}
+            if type:
+                filters["type"] = type
+            if compliance_status:
+                filters["compliance_status"] = compliance_status
+
+            # Execute query with pagination
+            products = Product.objects(**filters).skip(skip).limit(limit)
+            return [_map_product_to_response(product) for product in products]
+
+        # Run the synchronous mongoengine operation in a thread pool
+        with ThreadPoolExecutor() as executor:
+            result = await asyncio.get_event_loop().run_in_executor(executor, fetch_products)
+            
+        return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -201,9 +288,19 @@ async def list_products(
 async def get_product(product_id: str):
     """Get a specific financial product by ID"""
     try:
-        product = Product.objects(id=product_id).first()
+        def fetch_product():
+            product = Product.objects(id=product_id).first()
+            if not product:
+                return None
+            return product
+
+        # Run the synchronous mongoengine operation in a thread pool
+        with ThreadPoolExecutor() as executor:
+            product = await asyncio.get_event_loop().run_in_executor(executor, fetch_product)
+
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
+            
         return _map_product_to_response(product)
 
     except Exception as e:
@@ -388,3 +485,45 @@ async def delete_all_products():
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/extract-from-pdf", response_model=dict, tags=["products"])
+async def extract_product_from_pdf(file: UploadFile = File(...)):
+    """
+    Extract product information from a PDF document.
+    
+    This endpoint accepts a PDF file (both text-based and scanned) and attempts to
+    extract product information. It uses OCR for scanned documents and returns a
+    structured representation of the product information with confidence scores.
+    
+    The response includes only the information that meets the confidence threshold.
+    Information that couldn't be confidently extracted will be omitted.
+    """
+    try:
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+
+        # Read the file
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Empty file")
+
+        # Extract product information
+        extractor = ProductExtractor()
+        product_info = extractor.extract_product_info(contents)
+
+        # Add source document information
+        product_info["source_document"] = {
+            "filename": file.filename,
+            "size": len(contents),
+            "content_type": file.content_type
+        }
+
+        return {
+            "message": "Product information extracted successfully",
+            "product": product_info
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
