@@ -17,7 +17,7 @@ interface UploadPanelProps {
   isAnalyzing: boolean
   analysisProgress: number
   documentContent: string
-  onJsonUpload?: (jsonData: any) => void
+  onJsonUpload?: (jsonData: Record<string, unknown>) => void
   compact?: boolean
 }
 

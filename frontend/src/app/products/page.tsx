@@ -79,7 +79,7 @@ export default function ProductsPage() {
     setSelectedTags([]);
   };
 
-  const handleCreateProduct = (productData: any) => {
+  const handleCreateProduct = (productData: { name: string; category: string; status: string; tags: string[]; documentBrief: File }) => {
     // Handle product creation logic here
     console.log("Creating product:", productData);
   };

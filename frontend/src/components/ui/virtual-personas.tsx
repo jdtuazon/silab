@@ -579,7 +579,7 @@ export function VirtualPersonas({
                     Value Prop
                   </h5>
                   <p className="text-purple-600">
-                    "Smart financial solutions for modern life"
+                    &quot;Smart financial solutions for modern life&quot;
                   </p>
                 </div>
                 <div className="bg-white/70 rounded-lg p-3">

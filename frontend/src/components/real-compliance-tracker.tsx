@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useState, useEffect } from "react"
 import { UploadPanel } from "./upload-panel"
@@ -107,10 +108,10 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
   const [leftPanelOpen, setLeftPanelOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>("")
-  const [showDebug, setShowDebug] = useState(false)
+  // const [showDebug, setShowDebug] = useState(false)
   
   // New state for semantic analysis
-  const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(
+  const [semanticAnalysisData, setSemanticAnalysisData] = useState<Record<string, unknown> | null>(
     viewOnly ? {
       document_name: "Product Feature Specification",
       analysis_date: new Date().toISOString(),
@@ -160,8 +161,8 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
       }
     } : null
   )
-  const [selectedSection, setSelectedSection] = useState<any>(null)
-  const [showSemanticAnalysis, setShowSemanticAnalysis] = useState(true)
+  const [selectedSection, setSelectedSection] = useState<Record<string, unknown> | null>(null)
+  // const [showSemanticAnalysis, setShowSemanticAnalysis] = useState(true)
 
   const addDebugInfo = (info: string) => {
     const timestamp = new Date().toLocaleTimeString()
@@ -169,6 +170,7 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
     console.log(`[DEBUG] ${info}`)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const testConnection = async () => {
     addDebugInfo("🔍 Testing backend connection...")
     
@@ -218,6 +220,7 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const testEndpoints = async () => {
     addDebugInfo("🔍 Testing possible API endpoints...")
     
@@ -315,7 +318,7 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
   }
 
   // Transform new section analysis format to frontend violations
-  const transformSectionAnalysesToViolations = (sectionAnalyses: any[]): FrontendViolationData[] => {
+  const transformSectionAnalysesToViolations = (sectionAnalyses: Record<string, unknown>[]): FrontendViolationData[] => {
     console.log("🔧 Transform section analyses input:", sectionAnalyses)
     const violations: FrontendViolationData[] = []
     
@@ -471,7 +474,7 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
       }
 
-      const data: any = await response.json()
+      const data: Record<string, unknown> = await response.json()
       addDebugInfo(`✅ Backend response received: ${JSON.stringify(data)}`)
       
       // Store semantic analysis data
@@ -593,12 +596,12 @@ export function RealComplianceTracker({ viewOnly = false }: RealComplianceTracke
     setRightPanelOpen(true)
   }
 
-  const handleSectionSelect = (section: any) => {
+  const handleSectionSelect = (section: Record<string, unknown>) => {
     setSelectedSection(section)
     setRightPanelOpen(true) // Open the right panel on mobile
   }
 
-  const handleJsonUpload = (jsonData: any) => {
+  const handleJsonUpload = (jsonData: Record<string, unknown>) => {
     addDebugInfo(`📁 JSON analysis file uploaded: ${JSON.stringify(Object.keys(jsonData))}`)
     
     try {
