@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface UploadPanelProps {
+<<<<<<< HEAD
   onFileUpload: (file: File) => void;
   onTextInput: (text: string) => void;
   onAnalyze: () => void;
@@ -24,6 +25,16 @@ interface UploadPanelProps {
   documentContent: string;
   onJsonUpload?: (jsonData: any) => void;
   compact?: boolean;
+=======
+  onFileUpload: (file: File) => void
+  onTextInput: (text: string) => void
+  onAnalyze: () => void
+  isAnalyzing: boolean
+  analysisProgress: number
+  documentContent: string
+  onJsonUpload?: (jsonData: Record<string, unknown>) => void
+  compact?: boolean
+>>>>>>> fe/jm/rebase
 }
 
 export function UploadPanel({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/ui/header";
 import { Sidebar } from "@/components/ui/sidebar";
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 interface ProductDashboardProps {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 }
 
 type TopLevelTab = "synmarket" | "compliance";
@@ -30,14 +30,20 @@ type SidebarTab = "opportunity" | "similar" | "personas" | "insights";
 export default function ProductDashboard({ params }: ProductDashboardProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [productId, setProductId] = useState<string>("");
   const [topLevelTab, setTopLevelTab] = useState<TopLevelTab>("synmarket");
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("opportunity");
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set()
   );
 
+  // Extract productId from params
+  React.useEffect(() => {
+    params.then(({ productId: id }) => setProductId(id));
+  }, [params]);
+
   // Find the product
-  const product = mockProducts.find((p) => p.id === params.productId);
+  const product = mockProducts.find((p) => p.id === productId);
 
   if (!product) {
     return (

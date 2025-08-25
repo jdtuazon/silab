@@ -210,7 +210,7 @@ export function MarketOpportunity({
             <div className="bg-white rounded-lg border border-neutral-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-primary-text">
-                  Interest in "{product.type.toLowerCase()}" products
+                  Interest in &quot;{product.type.toLowerCase()}&quot; products
                 </span>
                 <span className="text-sm text-success font-semibold">
                   +23% YoY
