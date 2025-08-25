@@ -1,0 +1,10 @@
+EXECUTIVE SUMMARY
+We propose to launch QuickPay, a comprehensive digital wallet service that will revolutionize how Filipinos handle their financial transactions. This innovative platform will offer instant money transfers, bill payments, merchant transactions, and investment opportunities.
+
+PRODUCT FEATURES
+
+1. INSTANT MONEY TRANSFERS
+- Send money to any mobile number without verification
+- No transaction limits for VIP customers
+- Anonymous transfers available for privacy protection
+- Cross-border remittances without documentation

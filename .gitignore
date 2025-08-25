@@ -1,4 +1,8 @@
 # Dependencies
+
+.cursor/
+.github/instructions/
+
 node_modules/
 **/node_modules/
 
