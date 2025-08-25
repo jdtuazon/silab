@@ -200,6 +200,7 @@ export function RealComplianceTracker({
     console.log(`[DEBUG] ${info}`);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const testConnection = async () => {
     addDebugInfo("🔍 Testing backend connection...");
 
@@ -249,6 +250,7 @@ export function RealComplianceTracker({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const testEndpoints = async () => {
     addDebugInfo("🔍 Testing possible API endpoints...");
 

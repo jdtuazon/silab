@@ -11,7 +11,6 @@ import {
   Shield,
   TrendingUp,
   BarChart3,
-  X,
   Download,
   Eye,
   Trash2,
@@ -19,14 +18,11 @@ import {
   AlertCircle,
   Clock,
   File,
-  FolderOpen,
-  Plus,
-  Search,
-  Filter,
   Grid,
   List,
   Settings,
   RefreshCw,
+  Search,
 } from "lucide-react";
 
 interface Document {
@@ -235,7 +231,7 @@ export default function DocumentsPage() {
     type: string;
     title: string;
     description: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
   }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop: (acceptedFiles) => {

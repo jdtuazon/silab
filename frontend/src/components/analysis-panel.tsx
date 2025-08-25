@@ -66,7 +66,7 @@ export function AnalysisPanel({ analysisSummary, selectedViolation, onBackToOver
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Line {selectedViolation.lineNumber}</p>
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium text-foreground">"{selectedViolation.violatedText}"</p>
+                <p className="text-sm font-medium text-foreground">&quot;{selectedViolation.violatedText}&quot;</p>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function AnalysisPanel({ analysisSummary, selectedViolation, onBackToOver
             </div>
 
             <div className="p-3 bg-accent/5 border border-accent/20 rounded-lg">
-              <p className="text-sm text-foreground italic">"{selectedViolation.regulatorySource.directQuote}"</p>
+              <p className="text-sm text-foreground italic">&quot;{selectedViolation.regulatorySource.directQuote}&quot;</p>
               <p className="text-xs text-muted-foreground mt-2">— {selectedViolation.regulatorySource.document}</p>
             </div>
           </div>

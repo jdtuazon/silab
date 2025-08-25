@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useState, useEffect } from "react"
 import { ComplianceTracker } from "@/components/compliance-tracker"
 import { Shield, FileSearch, TrendingUp, ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -8,13 +9,19 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
 interface CompliancePageProps {
-  params: {
+  params: Promise<{
     product: string
-  }
+  }>
 }
 
 export default function CompliancePage({ params }: CompliancePageProps) {
-  const productName = decodeURIComponent(params.product)
+  const [productName, setProductName] = useState("")
+  
+  useEffect(() => {
+    params.then(({ product }) => {
+      setProductName(decodeURIComponent(product))
+    })
+  }, [params])
   
   return (
     <ThemeProvider
