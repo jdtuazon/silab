@@ -22,6 +22,7 @@ import {
   List,
   Settings,
   RefreshCw,
+  Search,
 } from "lucide-react";
 
 interface Document {
