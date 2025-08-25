@@ -3,15 +3,12 @@
 import { useState, useEffect } from "react";
 import { UploadPanel } from "./upload-panel";
 import { DocumentViewer } from "./document-viewer";
-import { AnalysisPanel } from "./analysis-panel";
 import { SemanticAnalysisPanel } from "./semantic-analysis-panel";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Upload, FileText, BarChart3, Download, Keyboard } from "lucide-react";
+import { Upload, FileText, BarChart3, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
-  BackendAnalysisResponse,
   BackendViolationData,
   FrontendViolationData,
   AnalysisSummary,
@@ -126,8 +123,7 @@ export function RealComplianceTracker({
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>("");
-  const [showDebug, setShowDebug] = useState(false);
+  const [_, setDebugInfo] = useState<string>("");
 
   // New state for semantic analysis
   const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(
@@ -192,106 +188,11 @@ export function RealComplianceTracker({
       : null
   );
   const [selectedSection, setSelectedSection] = useState<any>(null);
-  const [showSemanticAnalysis, setShowSemanticAnalysis] = useState(true);
 
   const addDebugInfo = (info: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setDebugInfo((prev) => `[${timestamp}] ${info}\n${prev}`);
     console.log(`[DEBUG] ${info}`);
-  };
-
-  const testConnection = async () => {
-    addDebugInfo("🔍 Testing backend connection...");
-
-    try {
-      // Test basic connectivity
-      addDebugInfo(`🌐 Testing connection to: ${API_BASE_URL}`);
-      const response = await fetch(`${API_BASE_URL}/health`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      addDebugInfo(`📡 Health check response status: ${response.status}`);
-
-      if (response.ok) {
-        const data = await response.text();
-        addDebugInfo(`✅ Backend is reachable! Response: ${data}`);
-        toast({
-          title: "Connection successful",
-          description: "Backend is reachable and responding.",
-        });
-      } else {
-        addDebugInfo(`⚠️ Health check failed with status: ${response.status}`);
-        toast({
-          title: "Connection issue",
-          description: `Backend responded with status ${response.status}`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      addDebugInfo(`❌ Connection test failed: ${errorMsg}`);
-
-      // Try to determine the type of error
-      if (errorMsg.includes("CORS")) {
-        addDebugInfo("🚨 CORS error detected - backend may need CORS headers");
-      } else if (errorMsg.includes("fetch")) {
-        addDebugInfo("🚨 Network error - backend may be down or unreachable");
-      }
-
-      toast({
-        title: "Connection failed",
-        description: "Cannot reach the backend. Check debug info for details.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const testEndpoints = async () => {
-    addDebugInfo("🔍 Testing possible API endpoints...");
-
-    // List of possible endpoint paths
-    const endpoints = [
-      "/compliance/analyze-line-by-line",
-      "/compliance/analyze",
-      "/rag/analyze",
-      "/analyze-line-by-line",
-      "/analyze",
-      "/api/compliance/analyze-line-by-line",
-      "/api/compliance/analyze",
-      "/v1/compliance/analyze-line-by-line",
-    ];
-
-    for (const endpoint of endpoints) {
-      try {
-        addDebugInfo(`🧪 Testing: ${API_BASE_URL}${endpoint}`);
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: "GET", // Try GET first to see if endpoint exists
-        });
-
-        if (response.status !== 404) {
-          addDebugInfo(
-            `✅ Found endpoint: ${endpoint} (status: ${response.status})`
-          );
-          if (response.status === 405) {
-            addDebugInfo(
-              `📝 Method not allowed - endpoint exists but needs POST`
-            );
-          }
-        } else {
-          addDebugInfo(`❌ Not found: ${endpoint}`);
-        }
-      } catch (error) {
-        addDebugInfo(`❌ Error testing ${endpoint}: ${error}`);
-      }
-    }
-
-    toast({
-      title: "Endpoint scan complete",
-      description: "Check debug info for available endpoints.",
-    });
   };
 
   useEffect(() => {
@@ -888,7 +789,7 @@ export function RealComplianceTracker({
             (a, b) => a.startLine - b.startLine
           );
 
-          sortedSections.forEach((section, index) => {
+          sortedSections.forEach((section) => {
             if (section.content) {
               reconstructedContent += section.content + "\n";
             } else if (section.text) {

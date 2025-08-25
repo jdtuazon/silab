@@ -10,36 +10,13 @@ import { VirtualPersonas } from "@/components/ui/virtual-personas";
 import { SiLabInsights } from "@/components/ui/silab-insights";
 import { RealComplianceTracker } from "@/components/real-compliance-tracker";
 import { mockProducts } from "@/lib/mock-data";
-import { Product } from "@/types/product";
 import {
   TrendingUp,
   Users,
-  Target,
   BarChart3,
-  Shield,
-  Eye,
   Download,
   Share2,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Info,
-  Calendar,
-  Building,
-  DollarSign,
-  TrendingDown,
-  Star,
-  Zap,
   Lightbulb,
-  ArrowRight,
-  Filter,
-  Search,
-  Plus,
-  Edit,
-  Save,
-  X,
   ArrowLeft,
 } from "lucide-react";
 
@@ -136,9 +113,7 @@ export default function ProductDashboard({ params }: ProductDashboardProps) {
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Header */}
-      <Header
-        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex">
         {/* Sidebar */}

@@ -4,13 +4,11 @@ import Link from "next/link";
 import { Product, ComplianceStatus } from "@/types/product";
 import {
   getProductUrl,
-  getComplianceStatusStyle,
   formatProductType,
   formatComplianceStatus,
   generateProductTags,
 } from "@/lib/utils";
-import { Shield } from 'lucide-react';
-import {  ProductStatus } from '@/types/product';
+import { Shield } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -128,7 +126,7 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
             <p className="text-xs text-neutral-400">
               Modified on {formatDate(product.updatedAt)}
             </p>
-            <Link 
+            <Link
               href={`/compliance/${encodeURIComponent(product.name)}`}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-all duration-200 group/compliance"
               onClick={(e) => e.stopPropagation()}

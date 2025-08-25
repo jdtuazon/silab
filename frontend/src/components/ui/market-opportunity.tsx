@@ -4,9 +4,7 @@ import { useState } from "react";
 import { Product } from "@/types/product";
 import {
   TrendingUp,
-  TrendingDown,
   CheckCircle,
-  AlertCircle,
   Info,
   Edit,
   Download,
@@ -21,9 +19,7 @@ import {
   Users,
   Globe,
   ArrowUpRight,
-  ArrowDownRight,
   Minus,
-  Calendar,
   Eye,
   Sparkles,
 } from "lucide-react";

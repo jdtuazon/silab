@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  X,
-  Home,
-  Package,
-  Settings,
-  Users,
-  BarChart3,
-  Newspaper,
-} from "lucide-react";
+import { X, Home, Package, Settings, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
