@@ -11,7 +11,6 @@ import {
   Shield,
   TrendingUp,
   BarChart3,
-  X,
   Download,
   Eye,
   Trash2,
@@ -19,10 +18,7 @@ import {
   AlertCircle,
   Clock,
   File,
-  FolderOpen,
-  Plus,
   Search,
-  Filter,
   Grid,
   List,
   Settings,
@@ -122,7 +118,7 @@ export default function DocumentsPage() {
     setDocuments(mockDocuments);
   });
 
-  const onDrop = useCallback((acceptedFiles: File[], type: string) => {
+  useCallback((acceptedFiles: File[], _type: string) => {
     setPendingFiles(acceptedFiles);
     setUploadStatus("processing");
     setIsModalOpen(true);
@@ -133,7 +129,7 @@ export default function DocumentsPage() {
     }, 1500);
   }, []);
 
-  const handleConfirmUpload = useCallback(() => {
+  useCallback(() => {
     const newDocuments: Document[] = pendingFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
@@ -162,7 +158,7 @@ export default function DocumentsPage() {
     }, 2000);
   }, [pendingFiles]);
 
-  const handleCancelUpload = useCallback(() => {
+  useCallback(() => {
     setUploadStatus("pending");
     setIsModalOpen(false);
     setPendingFiles([]);
@@ -227,7 +223,6 @@ export default function DocumentsPage() {
   });
 
   const DocumentDropzone = ({
-    type,
     title,
     description,
     icon: Icon,
