@@ -313,11 +313,7 @@ export default function DocumentsPage() {
       />
 
       {/* Header */}
-      <Header
-        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
       {/* Page Header */}
       <div className="bg-bg-primary border-b border-neutral-200 px-6 py-4">
