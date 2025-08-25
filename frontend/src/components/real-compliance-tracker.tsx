@@ -416,7 +416,7 @@ export function RealComplianceTracker({
         variant: "destructive",
       });
     }
-  }, []);
+  }, [documentContent]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
