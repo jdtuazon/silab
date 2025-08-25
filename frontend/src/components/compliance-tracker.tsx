@@ -191,7 +191,7 @@ export function ComplianceTracker() {
       title: "Analysis complete",
       description: `Found ${mockViolations.length} compliance violations in ${mockSummary.linesAnalyzed} lines.`,
     });
-  }, []);
+  }, [documentContent]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
