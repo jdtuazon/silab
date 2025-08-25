@@ -1,4 +1,8 @@
 # Dependencies
+
+.cursor/
+.github/instructions/
+
 node_modules/
 **/node_modules/
 
@@ -63,4 +67,4 @@ Thumbs.db
 
 # Temporary files
 *.tmp
-*.temp
+*.temp.claude.md
