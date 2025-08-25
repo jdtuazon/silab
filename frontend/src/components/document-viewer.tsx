@@ -31,8 +31,6 @@ interface DocumentViewerProps {
 export function DocumentViewer({
   content,
   violations,
-  onViolationClick,
-  selectedViolation,
   semanticAnalysisData,
   selectedSection,
   onSectionSelect,
@@ -82,19 +80,6 @@ export function DocumentViewer({
           lineNumber >= section.startLine && lineNumber <= section.endLine
       ) || null
     );
-  };
-
-  const getSeverityStyles = (severity: ViolationData["severity"]) => {
-    switch (severity) {
-      case "high":
-        return "bg-[color:var(--color-violation-high)]/20 border-[color:var(--color-violation-high)]/40 hover:bg-[color:var(--color-violation-high)]/30";
-      case "medium":
-        return "bg-[color:var(--color-violation-medium)]/20 border-[color:var(--color-violation-medium)]/40 hover:bg-[color:var(--color-violation-medium)]/30";
-      case "low":
-        return "bg-[color:var(--color-violation-low)]/20 border-[color:var(--color-violation-low)]/40 hover:bg-[color:var(--color-violation-low)]/30";
-      default:
-        return "";
-    }
   };
 
   const lines = content.split("\n");

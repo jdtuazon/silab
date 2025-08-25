@@ -14,23 +14,16 @@ import {
   Target,
   BarChart3,
   Users,
-  Lightbulb,
-  Zap,
-  Star,
   Shield,
-  DollarSign,
   ArrowRight,
   Clock,
   AlertTriangle,
   ThumbsUp,
-  ThumbsDown,
   Eye,
   Brain,
   Rocket,
   Settings,
   FileText,
-  PieChart,
-  Activity,
 } from "lucide-react";
 
 interface SiLabInsightsProps {
@@ -40,7 +33,6 @@ interface SiLabInsightsProps {
 }
 
 export function SiLabInsights({
-  product,
   expandedSections,
   onToggleSection,
 }: SiLabInsightsProps) {

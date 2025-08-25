@@ -28,7 +28,6 @@ interface UploadPanelProps {
 
 export function UploadPanel({
   onFileUpload,
-  onTextInput,
   onAnalyze,
   isAnalyzing,
   analysisProgress,
@@ -38,7 +37,7 @@ export function UploadPanel({
 }: UploadPanelProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [_, setTextInput] = useState("");
+  const [, setTextInput] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -168,7 +167,8 @@ export function UploadPanel({
       if (onJsonUpload) {
         onJsonUpload(jsonData);
       }
-    } catch (_) {
+    } catch (error) {
+      console.log(error);
       setJsonError("Invalid JSON file");
     }
   };
