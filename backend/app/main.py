@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
+from app.core.mongoengine_connection import connect_mongoengine, disconnect_mongoengine
 from app.services.r2r_service import r2r_service
-from app.routers import health, test_data, rag, compliance
+from app.routers import health, test_data, rag, compliance, product
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,8 +17,10 @@ async def lifespan(app: FastAPI):
     # Startup
     print(f"🚀 Starting {settings.app_name} v{settings.app_version}")
     
-    # Connect to MongoDB
+    # Connect to MongoDB (for motor and mongoengine)
     await connect_to_mongo()
+    connect_mongoengine()
+    
     
     # Check R2R service health
     try:
@@ -34,6 +37,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     print("🛑 Shutting down application")
     await close_mongo_connection()
+    disconnect_mongoengine()
     await r2r_service.close()
 
 def create_application() -> FastAPI:
@@ -60,6 +64,7 @@ def create_application() -> FastAPI:
     app.include_router(test_data.router)
     app.include_router(rag.router)
     app.include_router(compliance.router)
+    app.include_router(product.router)
     
     return app
 
