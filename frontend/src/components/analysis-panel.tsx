@@ -77,13 +77,9 @@ export function AnalysisPanel({
                 Line {selectedViolation.lineNumber}
               </p>
               <div className="p-3 bg-muted rounded-lg">
-<<<<<<< HEAD
                 <p className="text-sm font-medium text-foreground">
-                  "{selectedViolation.violatedText}"
+                  &quot;{selectedViolation.violatedText}&quot;
                 </p>
-=======
-                <p className="text-sm font-medium text-foreground">&quot;{selectedViolation.violatedText}&quot;</p>
->>>>>>> fe/jm/rebase
               </div>
             </div>
           </div>
@@ -119,17 +115,12 @@ export function AnalysisPanel({
             </div>
 
             <div className="p-3 bg-accent/5 border border-accent/20 rounded-lg">
-<<<<<<< HEAD
               <p className="text-sm text-foreground italic">
-                "{selectedViolation.regulatorySource.directQuote}"
+                &quot;{selectedViolation.regulatorySource.directQuote}&quot;
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 — {selectedViolation.regulatorySource.document}
               </p>
-=======
-              <p className="text-sm text-foreground italic">&quot;{selectedViolation.regulatorySource.directQuote}&quot;</p>
-              <p className="text-xs text-muted-foreground mt-2">— {selectedViolation.regulatorySource.document}</p>
->>>>>>> fe/jm/rebase
             </div>
           </div>
 
