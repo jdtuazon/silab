@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.services.r2r_service import r2r_service
-from app.routers import health, test_data, rag, compliance
+from app.routers import health, test_data, rag, compliance, product
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,6 +60,7 @@ def create_application() -> FastAPI:
     app.include_router(test_data.router)
     app.include_router(rag.router)
     app.include_router(compliance.router)
+    app.include_router(product.router)
     
     return app
 
