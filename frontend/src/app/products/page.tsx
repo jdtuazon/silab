@@ -99,11 +99,7 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Header */}
-      <Header
-        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-      />
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex">
         {/* Sidebar */}
