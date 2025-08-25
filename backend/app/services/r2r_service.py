@@ -79,9 +79,9 @@ class R2RService:
                 }
             }
             
-            # Use R2R v3 chunks search endpoint
+            # Use R2R v3 retrieval search endpoint
             response = await self.client.post(
-                f"{self.base_url}/v3/chunks/search",
+                f"{self.base_url}/v3/retrieval/search",
                 json=payload
             )
             response.raise_for_status()
@@ -95,7 +95,7 @@ class R2RService:
         try:
             # First, get search results
             search_results = await self.search_documents(query, limit=3)
-            search_chunks = search_results.get("results", [])
+            search_chunks = search_results.get("results", {}).get("chunk_search_results", [])
             
             if not search_chunks:
                 return {

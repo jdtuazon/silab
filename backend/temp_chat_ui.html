@@ -781,6 +781,15 @@
         async function handleFileUpload(file) {
             const complianceMessages = document.getElementById('compliance-messages');
             
+            console.log('🔍 DEBUG: File upload started', {
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                lastModified: file.lastModified
+            });
+            
+            addDebugMessage(`File upload started: ${file.name} (${file.size} bytes)`);
+            
             // Show processing message
             const processingDiv = document.createElement('div');
             processingDiv.id = 'processing-' + Date.now();
@@ -791,7 +800,7 @@
                         <div class="loading-dot"></div>
                         <div class="loading-dot"></div>
                     </div>
-                    <span>Processing ${file.name} for compliance violations...</span>
+                    <span>🔍 DEBUG: Processing ${file.name} (${file.size} bytes) for compliance violations...</span>
                 </div>
             `;
             complianceMessages.appendChild(processingDiv);
@@ -799,16 +808,34 @@
             
             try {
                 // Read file content
+                console.log('🔍 DEBUG: Reading file content...');
+                addDebugMessage('Reading file content...');
                 const fileContent = await readFileContent(file);
                 
+                console.log('🔍 DEBUG: File content read successfully', {
+                    contentLength: fileContent?.length || 0,
+                    contentPreview: fileContent?.substring(0, 200) || 'NO CONTENT'
+                });
+                addDebugMessage(`File content read: ${fileContent?.length || 0} characters`);
+                
+                if (!fileContent || fileContent.length === 0) {
+                    throw new Error('File content is empty or could not be read');
+                }
+                
                 // Analyze for compliance
+                console.log('🔍 DEBUG: Starting compliance analysis...');
+                addDebugMessage('Starting compliance analysis...');
                 await analyzeCompliance(file.name, fileContent, processingDiv.id);
                 
             } catch (error) {
-                console.error('File processing error:', error);
+                console.error('🚨 DEBUG: File processing error:', error);
+                addDebugMessage(`File processing error: ${error.message}`);
                 processingDiv.innerHTML = `
                     <div class="error-message">
                         ❌ Error processing ${file.name}: ${error.message}
+                        <div style="font-size: 12px; margin-top: 8px; color: #666;">
+                            Check browser console for detailed debug information.
+                        </div>
                     </div>
                 `;
             }
@@ -825,146 +852,194 @@
         
         async function analyzeCompliance(fileName, content, processingId) {
             try {
-                // Split content into individual lines for line-by-line analysis
-                const lines = content.split('\n').filter(line => line.trim().length > 10);
-                let allViolations = [];
-                let lineByLineResults = []; // Store detailed results for file output
-                
                 const complianceMessages = document.getElementById('compliance-messages');
-                
-                // Update processing message to show progress
                 const processingElement = document.getElementById(processingId);
                 
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    
-                    // Update progress
-                    processingElement.innerHTML = `
-                        <div class="processing-file">
-                            <div class="loading-dots">
-                                <div class="loading-dot"></div>
-                                <div class="loading-dot"></div>
-                                <div class="loading-dot"></div>
-                            </div>
-                            <span>Analyzing line ${i + 1}/${lines.length}: "${line.substring(0, 60)}..."</span>
+                // Debug: Log initial state
+                console.log('🔍 DEBUG: Starting compliance analysis', {
+                    fileName,
+                    contentLength: content?.length || 0,
+                    contentPreview: content?.substring(0, 100) || 'NO CONTENT',
+                    apiBase: API_BASE,
+                    processingId
+                });
+                
+                // Update processing message with debug info
+                processingElement.innerHTML = `
+                    <div class="processing-file">
+                        <div class="loading-dots">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
                         </div>
-                    `;
-                    
-                    // Skip headers and short lines but still record them
-                    const isSkipped = (line.length < 20 || /^[A-Z\s]+$/.test(line));
-                    
-                    if (isSkipped) {
-                        lineByLineResults.push({
-                            lineNumber: i + 1,
-                            originalText: line,
-                            status: "SKIPPED",
-                            reason: "Header or too short",
-                            analysis: "N/A",
-                            violations: 0
-                        });
-                        continue;
-                    }
-                    
-                    // Create focused compliance analysis for this specific line
-                    const taskPrompt = `You are analyzing financial service features against Philippine regulations. Based on the retrieved regulatory documents, does the provided text violate any compliance requirements? 
-
-Respond in this exact format:
-
-If violations found:
-VIOLATIONS_FOUND: [number]
-VIOLATION_TEXT: [quote the problematic text]
-COMPLIANCE_ISSUE: [explain the specific violation]
-REGULATORY_SOURCE: [cite the specific law/regulation from the documents]
-
-If no violations:
-VIOLATIONS_FOUND: 0
-REASON: [brief explanation why it's compliant]
-
-Be strict - flag anything that could be problematic based on the regulatory documents.`;
-
-                    try {
-                        const response = await fetch(`${API_BASE}/r2r/chat`, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                query: line,
-                                limit: 8,
-                                use_hybrid_search: true,
-                                task_prompt: taskPrompt
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`API Error: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        const lineAnalysis = data.response.completion;
-                        
-                        // Debug: Always show what we got from the API
-                        console.log(`Line ${i + 1} analysis:`, lineAnalysis);
-                        
-                        // Parse violations from analysis
-                        const violationCount = extractViolationCount(lineAnalysis);
-                        const violation = parseLineViolation(line, lineAnalysis);
-                        
-                        // Record detailed line result - always create result even if empty
-                        const lineResult = {
-                            lineNumber: i + 1,
-                            originalText: line,
-                            status: violationCount > 0 ? "VIOLATION" : "COMPLIANT",
-                            violations: violationCount,
-                            analysis: lineAnalysis || "No analysis returned from API",
-                            complianceIssue: violation ? violation.issue : null,
-                            regulatorySource: violation ? violation.source : null
-                        };
-                        
-                        lineByLineResults.push(lineResult);
-                        
-                        if (violation) {
-                            allViolations.push(violation);
-                            // Add real-time violation display
-                            addViolationToDisplay(violation, i + 1, lines.length);
-                        }
-                        
-                    } catch (error) {
-                        console.error(`Error analyzing line ${i + 1}:`, error);
-                        
-                        // Record error in results
-                        lineByLineResults.push({
-                            lineNumber: i + 1,
-                            originalText: line,
-                            status: "ERROR",
-                            reason: error.message,
-                            analysis: "Analysis failed: " + error.message,
-                            violations: 0
-                        });
-                    }
-                    
-                    // Small delay to avoid overwhelming
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                        <span>🔍 DEBUG: Analyzing document (${content?.length || 0} chars) using semantic sections...</span>
+                        <div style="font-size: 12px; margin-top: 8px; color: #666;">
+                            📍 Endpoint: ${API_BASE}/compliance/analyze<br>
+                            📄 File: ${fileName}<br>
+                            📝 Content Length: ${content?.length || 0} characters
+                        </div>
+                    </div>
+                `;
+                
+                // Debug: Test API connectivity first
+                try {
+                    console.log('🔍 DEBUG: Testing API connectivity...');
+                    const healthCheck = await fetch(`${API_BASE}/health`, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    console.log('🔍 DEBUG: Health check response:', {
+                        status: healthCheck.status,
+                        statusText: healthCheck.statusText,
+                        ok: healthCheck.ok
+                    });
+                } catch (healthError) {
+                    console.error('🚨 DEBUG: Health check failed:', healthError);
+                    addDebugMessage('Health check failed: ' + healthError.message);
                 }
+                
+                // Prepare request payload
+                const requestPayload = {
+                    filename: fileName,
+                    content: content
+                };
+                
+                console.log('🔍 DEBUG: Request payload:', {
+                    filename: requestPayload.filename,
+                    contentLength: requestPayload.content?.length,
+                    contentPreview: requestPayload.content?.substring(0, 100)
+                });
+                
+                addDebugMessage(`Making request to ${API_BASE}/compliance/analyze`);
+                
+                // Use the new semantic section analysis endpoint
+                const response = await fetch(`${API_BASE}/compliance/analyze`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+
+                console.log('🔍 DEBUG: Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('🚨 DEBUG: API Error Response:', errorText);
+                    addDebugMessage(`API Error: ${response.status} - ${response.statusText}\nResponse: ${errorText}`);
+                    throw new Error(`API Error: ${response.status} - ${response.statusText}\nResponse: ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ DEBUG: Compliance analysis response:', data);
+                addDebugMessage(`Analysis complete! Sections: ${data.section_analyses?.length || 'unknown'}, Violations: ${data.total_violations || 'unknown'}`);
                 
                 // Remove processing message
                 document.getElementById(processingId).remove();
                 
-                // Generate and offer file downloads
+                // Transform the semantic section analysis to violations for display
+                let allViolations = [];
+                let sectionResults = [];
+                
+                if (data.section_analyses) {
+                    // NEW FORMAT: Semantic section analysis
+                    data.section_analyses.forEach((section, index) => {
+                        if (section.status === 'VIOLATION' && section.violationDetails) {
+                            section.violationDetails.forEach((violationText, vIndex) => {
+                                allViolations.push({
+                                    sectionTitle: section.sectionTitle,
+                                    sectionType: section.sectionType,
+                                    originalLine: `${section.sectionTitle}: ${violationText}`,
+                                    problematicText: violationText,
+                                    violationType: 'Compliance',
+                                    issue: section.sectionAnalysis || 'Compliance violation detected',
+                                    source: section.businessImpact || 'Philippine Financial Regulations',
+                                    workarounds: section.workarounds || []
+                                });
+                            });
+                        }
+                        
+                        // Store section for file generation
+                        sectionResults.push({
+                            sectionNumber: index + 1,
+                            sectionTitle: section.sectionTitle,
+                            sectionType: section.sectionType,
+                            status: section.status,
+                            violations: section.violationCount || 0,
+                            analysis: section.analysis || section.sectionAnalysis,
+                            businessImpact: section.businessImpact,
+                            regulatoryRisk: section.regulatoryRisk,
+                            workarounds: section.workarounds || []
+                        });
+                    });
+                    
+                    // Display violations in real-time
+                    allViolations.forEach((violation, index) => {
+                        addSectionViolationToDisplay(violation, index + 1);
+                    });
+                    
+                } else if (data.analysis_results) {
+                    // LEGACY FORMAT: Line-by-line analysis (fallback)
+                    data.analysis_results.forEach((result, index) => {
+                        if (result.status === 'VIOLATION') {
+                            allViolations.push({
+                                originalLine: result.originalText,
+                                problematicText: result.originalText,
+                                violationType: 'Compliance',
+                                issue: result.analysis || 'Compliance violation detected',
+                                source: 'Philippine Financial Regulations'
+                            });
+                        }
+                    });
+                    
+                    // Display violations
+                    allViolations.forEach((violation, index) => {
+                        addViolationToDisplay(violation, index + 1, data.analysis_results.length);
+                    });
+                    
+                    sectionResults = data.analysis_results;
+                }
+                
+                // Generate result files
                 console.log('Generating result files...', {
                     fileName,
-                    totalResults: lineByLineResults.length,
+                    totalSections: sectionResults.length,
                     totalViolations: allViolations.length
                 });
-                generateResultFiles(fileName, lineByLineResults, allViolations);
+                generateSemanticResultFiles(fileName, data, sectionResults, allViolations);
                 
                 // Display final summary
-                displayFinalSummary(fileName, allViolations);
+                displayFinalSummary(fileName, allViolations, data.regulatory_summary);
                 
             } catch (error) {
+                console.error('🚨 DEBUG: Compliance analysis error:', error);
+                addDebugMessage(`ERROR: ${error.message}`);
+                addDebugMessage(`ERROR Stack: ${error.stack}`);
                 throw new Error(`Compliance analysis failed: ${error.message}`);
             }
+        }
+        
+        function addDebugMessage(message) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            const debugDiv = document.createElement('div');
+            debugDiv.className = 'message assistant';
+            debugDiv.innerHTML = `
+                <div class="message-avatar">🔍</div>
+                <div class="message-content">
+                    <div style="background: #f0f8ff; border: 1px solid #cce7ff; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap;">
+                        <strong>DEBUG:</strong> ${message}
+                        <div style="color: #666; font-size: 11px; margin-top: 4px;">${new Date().toLocaleTimeString()}</div>
+                    </div>
+                </div>
+            `;
+            complianceMessages.appendChild(debugDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
         }
         
         function extractViolationCount(analysisText) {
@@ -1024,6 +1099,74 @@ LINE-BY-LINE ANALYSIS:
             // Create download links
             createDownloadLink(JSON.stringify(jsonResults, null, 2), `${baseName}_compliance_analysis_${timestamp}.json`, 'JSON Results');
             createDownloadLink(textContent, `${baseName}_compliance_analysis_${timestamp}.txt`, 'Text Report');
+        }
+        
+        function generateSemanticResultFiles(fileName, fullData, sectionResults, violations) {
+            console.log('generateSemanticResultFiles called:', {fileName, sections: sectionResults.length, violations: violations.length});
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const baseName = fileName.replace(/\.[^/.]+$/, "");
+            
+            // Generate JSON file with full semantic data
+            const jsonResults = {
+                documentName: fileName,
+                analysisDate: new Date().toISOString(),
+                analysisType: "semantic_sections",
+                summary: {
+                    totalSections: sectionResults.length,
+                    sectionsWithViolations: sectionResults.filter(s => s.status === 'VIOLATION').length,
+                    violationsFound: violations.length,
+                    complianceStatus: violations.length === 0 ? 'COMPLIANT' : 'NON-COMPLIANT',
+                    complianceScore: fullData.regulatory_summary?.compliance_score || 0
+                },
+                sectionAnalyses: sectionResults,
+                violationsSummary: violations,
+                regulatorySummary: fullData.regulatory_summary || {},
+                fullResponse: fullData
+            };
+            
+            // Generate text file
+            let textContent = `SEMANTIC COMPLIANCE ANALYSIS REPORT
+========================================
+Document: ${fileName}
+Analysis Date: ${new Date().toLocaleString()}
+Analysis Type: Semantic Section Analysis
+Total Sections: ${sectionResults.length}
+Sections with Violations: ${sectionResults.filter(s => s.status === 'VIOLATION').length}
+Violations Found: ${violations.length}
+Overall Status: ${violations.length === 0 ? 'COMPLIANT' : 'NON-COMPLIANT'}
+${fullData.regulatory_summary ? `Compliance Score: ${fullData.regulatory_summary.compliance_score}/100` : ''}
+
+SECTION-BY-SECTION ANALYSIS:
+========================================
+
+`;
+
+            sectionResults.forEach(section => {
+                textContent += `Section ${section.sectionNumber}: ${section.sectionTitle} (${section.sectionType})\n`;
+                textContent += `Status: ${section.status}\n`;
+                textContent += `Violations: ${section.violations}\n`;
+                textContent += `Analysis: ${section.analysis}\n`;
+                if (section.businessImpact) {
+                    textContent += `Business Impact: ${section.businessImpact}\n`;
+                }
+                if (section.regulatoryRisk) {
+                    textContent += `Regulatory Risk: ${section.regulatoryRisk}\n`;
+                }
+                if (section.workarounds && section.workarounds.length > 0) {
+                    textContent += `\nWorkarounds:\n`;
+                    section.workarounds.forEach((w, i) => {
+                        textContent += `  ${i + 1}. ${w.title}: ${w.description}\n`;
+                        if (w.regulatoryAlignment) textContent += `     Regulatory: ${w.regulatoryAlignment}\n`;
+                        if (w.businessBenefit) textContent += `     Business: ${w.businessBenefit}\n`;
+                    });
+                }
+                textContent += `\n${'='.repeat(50)}\n\n`;
+            });
+            
+            // Create download links
+            createDownloadLink(JSON.stringify(jsonResults, null, 2), `${baseName}_semantic_compliance_analysis_${timestamp}.json`, 'Semantic Analysis JSON');
+            createDownloadLink(textContent, `${baseName}_semantic_compliance_analysis_${timestamp}.txt`, 'Semantic Analysis Report');
         }
         
         function createDownloadLink(content, filename, label) {
@@ -1105,7 +1248,53 @@ LINE-BY-LINE ANALYSIS:
             complianceMessages.scrollTop = complianceMessages.scrollHeight;
         }
         
-        function displayFinalSummary(fileName, violations) {
+        function addSectionViolationToDisplay(violation, violationNum) {
+            const complianceMessages = document.getElementById('compliance-messages');
+            
+            let workaroundsHtml = '';
+            if (violation.workarounds && violation.workarounds.length > 0) {
+                workaroundsHtml = `
+                    <div style="margin-top: 12px; padding: 12px; background: #e8f5e8; border-radius: 6px; border-left: 4px solid #28a745;">
+                        <strong>💡 Suggested Workarounds:</strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                            ${violation.workarounds.slice(0, 3).map(w => `
+                                <li style="margin-bottom: 8px;">
+                                    <strong>${w.title}</strong>: ${w.description}
+                                    ${w.regulatoryAlignment ? `<br><em>Regulatory: ${w.regulatoryAlignment}</em>` : ''}
+                                    ${w.businessBenefit ? `<br><em>Business: ${w.businessBenefit}</em>` : ''}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            const violationDiv = document.createElement('div');
+            violationDiv.className = 'message assistant';
+            violationDiv.innerHTML = `
+                <div class="message-avatar">⚠️</div>
+                <div class="message-content">
+                    <div class="compliance-issue">
+                        <div class="issue-text">❌ Section: ${violation.sectionTitle} (${violation.sectionType || 'feature'})</div>
+                        <div style="margin: 8px 0; padding: 8px; background: #fff3cd; border-radius: 4px;">
+                            <strong>Violation:</strong> "${violation.problematicText}"
+                        </div>
+                        <div class="issue-reason">
+                            <strong>Compliance Issue:</strong> ${violation.issue}
+                        </div>
+                        <div class="issue-source">
+                            <strong>Business Impact:</strong> ${violation.source}
+                        </div>
+                        ${workaroundsHtml}
+                    </div>
+                </div>
+            `;
+            
+            complianceMessages.appendChild(violationDiv);
+            complianceMessages.scrollTop = complianceMessages.scrollHeight;
+        }
+        
+        function displayFinalSummary(fileName, violations, regulatorySummary = null) {
             const complianceMessages = document.getElementById('compliance-messages');
             
             const summaryDiv = document.createElement('div');
@@ -1113,30 +1302,68 @@ LINE-BY-LINE ANALYSIS:
             
             const isPass = violations.length === 0;
             
+            let scoreInfo = '';
+            let domainBreakdown = '';
+            
+            if (regulatorySummary) {
+                if (regulatorySummary.compliance_score !== undefined) {
+                    const score = regulatorySummary.compliance_score;
+                    const scoreColor = score >= 80 ? '#28a745' : score >= 50 ? '#ffc107' : '#dc3545';
+                    scoreInfo = `
+                        <div style="margin: 12px 0; padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                            <strong>Compliance Score: <span style="color: ${scoreColor}; font-size: 18px;">${score}/100</span></strong>
+                        </div>
+                    `;
+                }
+                
+                if (regulatorySummary.domains_affected && regulatorySummary.domains_affected.length > 0) {
+                    domainBreakdown = `
+                        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                            <h4 style="margin: 0 0 10px 0; color: #856404;">📊 Domains Affected:</h4>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                ${regulatorySummary.domains_affected.map(domain => `
+                                    <li><strong>${domain.charAt(0).toUpperCase() + domain.slice(1).replace('_', ' ')}</strong></li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Traditional violation breakdown as fallback
+            const traditionBreakdown = !regulatorySummary && !isPass ? `
+                <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">📊 Violation Breakdown:</h4>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><strong>Feature Violations:</strong> ${violations.filter(v => v.sectionType === 'feature').length}</li>
+                        <li><strong>Architecture Violations:</strong> ${violations.filter(v => v.sectionType === 'architecture').length}</li>
+                        <li><strong>Data Privacy Violations:</strong> ${violations.filter(v => v.sectionType === 'data_privacy').length}</li>
+                        <li><strong>Business Model Issues:</strong> ${violations.filter(v => v.sectionType === 'business').length}</li>
+                    </ul>
+                </div>
+            ` : '';
+            
             summaryDiv.innerHTML = `
                 <div class="message-avatar">📋</div>
                 <div class="message-content">
                     <div class="compliance-result ${isPass ? 'pass' : 'fail'}">
                         <div class="compliance-header">
                             <span>${isPass ? '✅' : '❌'}</span>
-                            <span><strong>Final Analysis Summary: ${fileName}</strong></span>
+                            <span><strong>Semantic Analysis Complete: ${fileName}</strong></span>
                         </div>
                         <p>${isPass ? 
-                            '🎉 Document analysis complete! No violations detected.' : 
-                            `🚨 COMPLIANCE ANALYSIS COMPLETE: Found ${violations.length} violations across multiple lines.`
+                            '🎉 Document passes semantic compliance analysis! No violations detected.' : 
+                            `🚨 SEMANTIC COMPLIANCE ANALYSIS COMPLETE: Found ${violations.length} violations across document sections.`
                         }</p>
                         
-                        ${!isPass ? `
-                            <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
-                                <h4 style="margin: 0 0 10px 0; color: #856404;">📊 Violation Breakdown:</h4>
-                                <ul style="margin: 0; padding-left: 20px;">
-                                    <li><strong>AML Violations:</strong> ${violations.filter(v => v.violationType.includes('AML')).length}</li>
-                                    <li><strong>Data Privacy Violations:</strong> ${violations.filter(v => v.violationType.includes('Privacy')).length}</li>
-                                    <li><strong>Banking Regulation Violations:</strong> ${violations.filter(v => v.violationType.includes('Banking')).length}</li>
-                                    <li><strong>Other Compliance Issues:</strong> ${violations.filter(v => !v.violationType.includes('AML') && !v.violationType.includes('Privacy') && !v.violationType.includes('Banking')).length}</li>
-                                </ul>
-                            </div>
-                        ` : ''}
+                        ${scoreInfo}
+                        ${domainBreakdown}
+                        ${traditionBreakdown}
+                        
+                        <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px;">
+                            <strong>📄 Analysis Method:</strong> Semantic Section Analysis
+                            <br><small>Document was analyzed by business sections rather than line-by-line for better context understanding.</small>
+                        </div>
                     </div>
                 </div>
             `;
