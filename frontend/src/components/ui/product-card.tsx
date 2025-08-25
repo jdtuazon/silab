@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Shield } from 'lucide-react';
 import { Product, ProductStatus } from '@/types/product';
 
 interface ProductCardProps {
@@ -89,10 +90,20 @@ export function ProductCard({ product, selectedTags }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Modified date */}
-          <p className="text-xs text-neutral-400">
-            Modified on {formatDate(product.updatedAt)}
-          </p>
+          {/* Actions */}
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-xs text-neutral-400">
+              Modified on {formatDate(product.updatedAt)}
+            </p>
+            <Link 
+              href={`/compliance/${encodeURIComponent(product.name)}`}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-all duration-200 group/compliance"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Shield className="h-3 w-3 group-hover/compliance:scale-110 transition-transform" />
+              Compliance
+            </Link>
+          </div>
         </div>
       </div>
     </Link>

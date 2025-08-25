@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -125,9 +126,6 @@
   --color-violation-medium: var(--violation-medium);
   --color-violation-low: var(--violation-low);
   --color-compliant: var(--compliant);
-
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @layer base {
