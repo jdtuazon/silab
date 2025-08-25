@@ -50,8 +50,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/20 backdrop-blur-sm transition-all duration-200"
-            aria-label="Close sidebar"
+            className="p-1 hover:bg-neutral-100 rounded lg:hidden"
           >
             <X className="w-5 h-5 text-inverse drop-shadow-sm" />
           </button>
@@ -82,7 +81,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
           </div>
         </div>
-      </nav>
+      </div>
     </>
   );
 }
