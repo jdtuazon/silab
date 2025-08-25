@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Header } from "@/components/ui/header";
 import { Sidebar } from "@/components/ui/sidebar";
+import { UploadModal } from "@/components/ui/upload-modal";
 import {
   Upload,
   FileText,
@@ -45,7 +46,11 @@ export default function DocumentsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<
+    "pending" | "processing" | "ready"
+  >("pending");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Mock initial documents
@@ -118,11 +123,22 @@ export default function DocumentsPage() {
   });
 
   const onDrop = useCallback((acceptedFiles: File[], type: string) => {
-    const newDocuments: Document[] = acceptedFiles.map((file) => ({
+    setPendingFiles(acceptedFiles);
+    setUploadStatus("processing");
+    setIsModalOpen(true);
+
+    // Simulate file processing (e.g., virus scan, format check)
+    setTimeout(() => {
+      setUploadStatus("ready");
+    }, 1500);
+  }, []);
+
+  const handleConfirmUpload = useCallback(() => {
+    const newDocuments: Document[] = pendingFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
-      type: type as "regulatory" | "case-study" | "market-context",
-      category: getCategoryFromType(type),
+      type: "regulatory" as const,
+      category: getCategoryFromType("regulatory"),
       size: formatFileSize(file.size),
       uploadedAt: new Date().toISOString().split("T")[0],
       status: "processing",
@@ -130,9 +146,11 @@ export default function DocumentsPage() {
     }));
 
     setDocuments((prev) => [...prev, ...newDocuments]);
-    setUploadingFiles((prev) => [...prev, ...acceptedFiles.map((f) => f.name)]);
+    setUploadStatus("pending");
+    setIsModalOpen(false);
+    setPendingFiles([]);
 
-    // Simulate processing
+    // Simulate upload completion
     setTimeout(() => {
       setDocuments((prev) =>
         prev.map((doc) =>
@@ -141,10 +159,13 @@ export default function DocumentsPage() {
             : doc
         )
       );
-      setUploadingFiles((prev) =>
-        prev.filter((name) => !acceptedFiles.some((f) => f.name === name))
-      );
     }, 2000);
+  }, [pendingFiles]);
+
+  const handleCancelUpload = useCallback(() => {
+    setUploadStatus("pending");
+    setIsModalOpen(false);
+    setPendingFiles([]);
   }, []);
 
   const getCategoryFromType = (type: string): string => {
@@ -217,7 +238,11 @@ export default function DocumentsPage() {
     icon: any;
   }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
-      onDrop: (files) => onDrop(files, type),
+      onDrop: (acceptedFiles) => {
+        setPendingFiles(acceptedFiles);
+        setUploadStatus("pending");
+        setIsModalOpen(true);
+      },
       accept: {
         "application/pdf": [".pdf"],
         "application/msword": [".doc"],
@@ -268,6 +293,28 @@ export default function DocumentsPage() {
     <div className="min-h-screen bg-bg-secondary">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={isModalOpen}
+        files={pendingFiles}
+        uploadStatus={uploadStatus}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async () => {
+          setUploadStatus("processing");
+          try {
+            // TODO: Implement actual file upload logic here
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated upload
+            setUploadStatus("ready");
+            setPendingFiles([]);
+            setIsModalOpen(false);
+            // TODO: Refresh documents list after successful upload
+          } catch (error) {
+            console.error("Upload failed:", error);
+            setUploadStatus("pending");
+          }
+        }}
+      />
 
       {/* Header */}
       <Header
