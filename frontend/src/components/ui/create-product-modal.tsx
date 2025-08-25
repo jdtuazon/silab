@@ -15,7 +15,7 @@ interface CreateProductData {
   category: string;
   status: ProductStatus;
   tags: string[];
-  documentBrief: File;
+  documentBrief?: File; // Made optional with ?
 }
 
 const statusOptions: { value: ProductStatus; label: string }[] = [
@@ -43,7 +43,11 @@ export function CreateProductModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name.trim() && formData.category.trim() && formData.documentBrief) {
+    if (
+      formData.name.trim() &&
+      formData.category.trim() &&
+      formData.documentBrief
+    ) {
       onSubmit(formData);
       // Reset form
       setFormData({
@@ -274,7 +278,8 @@ export function CreateProductModal({
                         {formData.documentBrief.name}
                       </p>
                       <p className="text-xs text-muted-text">
-                        {(formData.documentBrief.size / 1024 / 1024).toFixed(2)} MB
+                        {(formData.documentBrief.size / 1024 / 1024).toFixed(2)}{" "}
+                        MB
                       </p>
                     </div>
                   </div>

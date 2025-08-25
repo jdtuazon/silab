@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { UploadPanel } from "./upload-panel";
 import { DocumentViewer } from "./document-viewer";
 import { AnalysisPanel } from "./analysis-panel";
@@ -68,7 +68,7 @@ export function ComplianceTracker() {
     []
   );
 
-  const startAnalysis = async () => {
+  const startAnalysis = useCallback(async () => {
     if (!documentContent.trim()) {
       toast({
         title: "No content to analyze",
@@ -191,7 +191,7 @@ export function ComplianceTracker() {
       title: "Analysis complete",
       description: `Found ${mockViolations.length} compliance violations in ${mockSummary.linesAnalyzed} lines.`,
     });
-  };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
