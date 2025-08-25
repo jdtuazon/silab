@@ -123,7 +123,7 @@ export function RealComplianceTracker({
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [_, setDebugInfo] = useState<string>("");
+  const [, setDebugInfo] = useState<string>("");
 
   // New state for semantic analysis
   const [semanticAnalysisData, setSemanticAnalysisData] = useState<any>(
@@ -193,227 +193,6 @@ export function RealComplianceTracker({
     const timestamp = new Date().toLocaleTimeString();
     setDebugInfo((prev) => `[${timestamp}] ${info}\n${prev}`);
     console.log(`[DEBUG] ${info}`);
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case "u":
-            e.preventDefault();
-            setLeftPanelOpen(true);
-            break;
-          case "r":
-            e.preventDefault();
-            if (documentContent.trim()) {
-              startAnalysis();
-            }
-            break;
-        }
-      }
-      if (e.key === "Escape") {
-        setLeftPanelOpen(false);
-        setRightPanelOpen(false);
-        setSelectedViolation(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [documentContent]);
-
-  const handleFileUpload = async (file: File) => {
-    try {
-      const text = await file.text();
-      setDocumentContent(text);
-      setViolations([]);
-      setAnalysisSummary(null);
-      setSelectedViolation(null);
-      toast({
-        title: "File uploaded successfully",
-        description: `${file.name} is ready for analysis.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "There was an error reading the file. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleTextInput = (text: string) => {
-    setDocumentContent(text);
-    setViolations([]);
-    setAnalysisSummary(null);
-    setSelectedViolation(null);
-  };
-
-  // Transform new section analysis format to frontend violations
-  const transformSectionAnalysesToViolations = (
-    sectionAnalyses: any[]
-  ): FrontendViolationData[] => {
-    console.log("🔧 Transform section analyses input:", sectionAnalyses);
-    const violations: FrontendViolationData[] = [];
-
-    sectionAnalyses.forEach((section, sectionIndex) => {
-      if (
-        section.status === "VIOLATION" &&
-        Array.isArray(section.violationDetails)
-      ) {
-        // Create violations for each violation detail in the section
-        section.violationDetails.forEach(
-          (violationDetail: string, detailIndex: number) => {
-            // Extract category from section type
-            let category: "AML" | "DataPrivacy" | "Banking" | "Securities" =
-              "Banking";
-            if (
-              section.sectionType === "data_privacy" ||
-              violationDetail.toLowerCase().includes("data privacy")
-            ) {
-              category = "DataPrivacy";
-            } else if (
-              violationDetail.toLowerCase().includes("aml") ||
-              violationDetail.toLowerCase().includes("9160")
-            ) {
-              category = "AML";
-            } else if (
-              violationDetail.toLowerCase().includes("sec") ||
-              violationDetail.toLowerCase().includes("securities")
-            ) {
-              category = "Securities";
-            }
-
-            // Determine severity based on business impact
-            let severity: "high" | "medium" | "low" = "medium";
-            if (
-              section.regulatoryRisk?.toLowerCase().includes("enforcement") ||
-              section.businessImpact?.toLowerCase().includes("high")
-            ) {
-              severity = "high";
-            } else if (
-              section.regulatoryRisk?.toLowerCase().includes("warning") ||
-              section.businessImpact?.toLowerCase().includes("moderate")
-            ) {
-              severity = "medium";
-            } else {
-              severity = "low";
-            }
-
-            violations.push({
-              id: `section_${sectionIndex}_violation_${detailIndex}`,
-              lineNumber: section.startLine,
-              startChar: 0,
-              endChar: 100, // Approximate
-              severity,
-              violatedText: `${section.sectionTitle}: ${violationDetail}`,
-              regulatorySource: {
-                law:
-                  violationDetail.split(" - ")[1] ||
-                  "Philippine Financial Regulations",
-                section: section.sectionType,
-                document: "Section Analysis",
-                authority:
-                  category === "AML"
-                    ? "BSP"
-                    : category === "DataPrivacy"
-                    ? "NPC"
-                    : category === "Securities"
-                    ? "SEC"
-                    : "BSP",
-                directQuote: section.sectionAnalysis || violationDetail,
-              },
-              explanation: section.businessImpact || violationDetail,
-              category,
-            });
-          }
-        );
-      }
-    });
-
-    console.log("🔧 Transformed section violations:", violations.length);
-    return violations;
-  };
-
-  // Transform backend data to frontend format (legacy line-by-line)
-  const transformBackendToFrontend = (
-    backendData: BackendViolationData[]
-  ): FrontendViolationData[] => {
-    console.log("🔧 Transform input:", backendData);
-    const violations = backendData.filter(
-      (item) => item.status === "VIOLATION"
-    );
-    console.log(
-      "🔧 Filtered violations:",
-      violations.length,
-      "out of",
-      backendData.length
-    );
-
-    return violations.map((item, index) => {
-      // Extract regulatory info from the regulatorySource string
-      const regParts = item.regulatorySource.split(", ");
-      const lawMatch = regParts[0];
-      const sectionMatch = regParts[1] || "";
-
-      // Determine category based on regulatory source
-      let category: "AML" | "DataPrivacy" | "Banking" | "Securities" =
-        "Banking";
-      if (
-        item.regulatorySource.includes("RA No. 9160") ||
-        item.regulatorySource.includes("AML")
-      ) {
-        category = "AML";
-      } else if (
-        item.regulatorySource.includes("Data Privacy") ||
-        item.regulatorySource.includes("RA No. 10173")
-      ) {
-        category = "DataPrivacy";
-      } else if (
-        item.regulatorySource.includes("SEC") ||
-        item.regulatorySource.includes("Securities")
-      ) {
-        category = "Securities";
-      }
-
-      // Determine severity based on violations count and content
-      let severity: "high" | "medium" | "low" = "medium";
-      if (
-        item.violations > 1 ||
-        item.complianceIssue.toLowerCase().includes("money laundering")
-      ) {
-        severity = "high";
-      } else if (item.violations === 1) {
-        severity = "medium";
-      } else {
-        severity = "low";
-      }
-
-      return {
-        id: `violation_${index}`,
-        lineNumber: item.lineNumber,
-        startChar: 0, // We'll need to calculate this based on line content
-        endChar: item.originalText.length,
-        severity,
-        violatedText: item.originalText,
-        regulatorySource: {
-          law: lawMatch || "Unknown Law",
-          section: sectionMatch || "Unknown Section",
-          document: item.regulatorySource,
-          authority:
-            category === "AML"
-              ? "BSP"
-              : category === "DataPrivacy"
-              ? "NPC"
-              : category === "Securities"
-              ? "SEC"
-              : "BSP",
-          directQuote: item.complianceIssue, // Using compliance issue as the quote for now
-        },
-        explanation: item.complianceIssue,
-        category,
-      };
-    });
   };
 
   const startAnalysis = async () => {
@@ -637,6 +416,227 @@ export function RealComplianceTracker({
         variant: "destructive",
       });
     }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case "u":
+            e.preventDefault();
+            setLeftPanelOpen(true);
+            break;
+          case "r":
+            e.preventDefault();
+            if (documentContent.trim()) {
+              startAnalysis();
+            }
+            break;
+        }
+      }
+      if (e.key === "Escape") {
+        setLeftPanelOpen(false);
+        setRightPanelOpen(false);
+        setSelectedViolation(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [documentContent, startAnalysis]);
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const text = await file.text();
+      setDocumentContent(text);
+      setViolations([]);
+      setAnalysisSummary(null);
+      setSelectedViolation(null);
+      toast({
+        title: "File uploaded successfully",
+        description: `${file.name} is ready for analysis.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "There was an error reading the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTextInput = (text: string) => {
+    setDocumentContent(text);
+    setViolations([]);
+    setAnalysisSummary(null);
+    setSelectedViolation(null);
+  };
+
+  // Transform new section analysis format to frontend violations
+  const transformSectionAnalysesToViolations = (
+    sectionAnalyses: any[]
+  ): FrontendViolationData[] => {
+    console.log("🔧 Transform section analyses input:", sectionAnalyses);
+    const violations: FrontendViolationData[] = [];
+
+    sectionAnalyses.forEach((section, sectionIndex) => {
+      if (
+        section.status === "VIOLATION" &&
+        Array.isArray(section.violationDetails)
+      ) {
+        // Create violations for each violation detail in the section
+        section.violationDetails.forEach(
+          (violationDetail: string, detailIndex: number) => {
+            // Extract category from section type
+            let category: "AML" | "DataPrivacy" | "Banking" | "Securities" =
+              "Banking";
+            if (
+              section.sectionType === "data_privacy" ||
+              violationDetail.toLowerCase().includes("data privacy")
+            ) {
+              category = "DataPrivacy";
+            } else if (
+              violationDetail.toLowerCase().includes("aml") ||
+              violationDetail.toLowerCase().includes("9160")
+            ) {
+              category = "AML";
+            } else if (
+              violationDetail.toLowerCase().includes("sec") ||
+              violationDetail.toLowerCase().includes("securities")
+            ) {
+              category = "Securities";
+            }
+
+            // Determine severity based on business impact
+            let severity: "high" | "medium" | "low" = "medium";
+            if (
+              section.regulatoryRisk?.toLowerCase().includes("enforcement") ||
+              section.businessImpact?.toLowerCase().includes("high")
+            ) {
+              severity = "high";
+            } else if (
+              section.regulatoryRisk?.toLowerCase().includes("warning") ||
+              section.businessImpact?.toLowerCase().includes("moderate")
+            ) {
+              severity = "medium";
+            } else {
+              severity = "low";
+            }
+
+            violations.push({
+              id: `section_${sectionIndex}_violation_${detailIndex}`,
+              lineNumber: section.startLine,
+              startChar: 0,
+              endChar: 100, // Approximate
+              severity,
+              violatedText: `${section.sectionTitle}: ${violationDetail}`,
+              regulatorySource: {
+                law:
+                  violationDetail.split(" - ")[1] ||
+                  "Philippine Financial Regulations",
+                section: section.sectionType,
+                document: "Section Analysis",
+                authority:
+                  category === "AML"
+                    ? "BSP"
+                    : category === "DataPrivacy"
+                    ? "NPC"
+                    : category === "Securities"
+                    ? "SEC"
+                    : "BSP",
+                directQuote: section.sectionAnalysis || violationDetail,
+              },
+              explanation: section.businessImpact || violationDetail,
+              category,
+            });
+          }
+        );
+      }
+    });
+
+    console.log("🔧 Transformed section violations:", violations.length);
+    return violations;
+  };
+
+  // Transform backend data to frontend format (legacy line-by-line)
+  const transformBackendToFrontend = (
+    backendData: BackendViolationData[]
+  ): FrontendViolationData[] => {
+    console.log("🔧 Transform input:", backendData);
+    const violations = backendData.filter(
+      (item) => item.status === "VIOLATION"
+    );
+    console.log(
+      "🔧 Filtered violations:",
+      violations.length,
+      "out of",
+      backendData.length
+    );
+
+    return violations.map((item, index) => {
+      // Extract regulatory info from the regulatorySource string
+      const regParts = item.regulatorySource.split(", ");
+      const lawMatch = regParts[0];
+      const sectionMatch = regParts[1] || "";
+
+      // Determine category based on regulatory source
+      let category: "AML" | "DataPrivacy" | "Banking" | "Securities" =
+        "Banking";
+      if (
+        item.regulatorySource.includes("RA No. 9160") ||
+        item.regulatorySource.includes("AML")
+      ) {
+        category = "AML";
+      } else if (
+        item.regulatorySource.includes("Data Privacy") ||
+        item.regulatorySource.includes("RA No. 10173")
+      ) {
+        category = "DataPrivacy";
+      } else if (
+        item.regulatorySource.includes("SEC") ||
+        item.regulatorySource.includes("Securities")
+      ) {
+        category = "Securities";
+      }
+
+      // Determine severity based on violations count and content
+      let severity: "high" | "medium" | "low" = "medium";
+      if (
+        item.violations > 1 ||
+        item.complianceIssue.toLowerCase().includes("money laundering")
+      ) {
+        severity = "high";
+      } else if (item.violations === 1) {
+        severity = "medium";
+      } else {
+        severity = "low";
+      }
+
+      return {
+        id: `violation_${index}`,
+        lineNumber: item.lineNumber,
+        startChar: 0, // We'll need to calculate this based on line content
+        endChar: item.originalText.length,
+        severity,
+        violatedText: item.originalText,
+        regulatorySource: {
+          law: lawMatch || "Unknown Law",
+          section: sectionMatch || "Unknown Section",
+          document: item.regulatorySource,
+          authority:
+            category === "AML"
+              ? "BSP"
+              : category === "DataPrivacy"
+              ? "NPC"
+              : category === "Securities"
+              ? "SEC"
+              : "BSP",
+          directQuote: item.complianceIssue, // Using compliance issue as the quote for now
+        },
+        explanation: item.complianceIssue,
+        category,
+      };
+    });
   };
 
   const handleViolationClick = (violation: FrontendViolationData) => {

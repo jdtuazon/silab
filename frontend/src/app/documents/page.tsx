@@ -118,7 +118,7 @@ export default function DocumentsPage() {
     setDocuments(mockDocuments);
   });
 
-  useCallback((acceptedFiles: File[], _type: string) => {
+  useCallback((acceptedFiles: File[]) => {
     setPendingFiles(acceptedFiles);
     setUploadStatus("processing");
     setIsModalOpen(true);

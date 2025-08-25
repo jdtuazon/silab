@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Product, ComplianceStatus } from "@/types/product";
 import {
   getProductUrl,
-  getComplianceStatusStyle,
   formatProductType,
   formatComplianceStatus,
   generateProductTags,

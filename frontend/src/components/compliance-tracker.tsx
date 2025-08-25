@@ -68,87 +68,6 @@ export function ComplianceTracker() {
     []
   );
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case "u":
-            e.preventDefault();
-            setLeftPanelOpen(true);
-            break;
-          case "r":
-            e.preventDefault();
-            if (documentContent.trim()) {
-              startAnalysis();
-            }
-            break;
-          case "f":
-            e.preventDefault();
-            const searchInput = document.querySelector(
-              "[data-search-input]"
-            ) as HTMLInputElement;
-            searchInput?.focus();
-            break;
-        }
-      }
-      if (e.key === "Escape") {
-        setLeftPanelOpen(false);
-        setRightPanelOpen(false);
-        setSelectedViolation(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [documentContent]);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredViolations(violations);
-    } else {
-      const filtered = violations.filter(
-        (violation) =>
-          violation.violatedText
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          violation.category
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          violation.regulatorySource.law
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-      );
-      setFilteredViolations(filtered);
-    }
-  }, [violations, searchQuery]);
-
-  const handleFileUpload = async (file: File) => {
-    try {
-      const text = await file.text();
-      setDocumentContent(text);
-      setViolations([]);
-      setAnalysisSummary(null);
-      setSelectedViolation(null);
-      toast({
-        title: "File uploaded successfully",
-        description: `${file.name} is ready for analysis.`,
-      });
-    } catch (_) {
-      toast({
-        title: "Upload failed",
-        description: "There was an error reading the file. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleTextInput = (text: string) => {
-    setDocumentContent(text);
-    setViolations([]);
-    setAnalysisSummary(null);
-    setSelectedViolation(null);
-  };
-
   const startAnalysis = async () => {
     if (!documentContent.trim()) {
       toast({
@@ -272,6 +191,88 @@ export function ComplianceTracker() {
       title: "Analysis complete",
       description: `Found ${mockViolations.length} compliance violations in ${mockSummary.linesAnalyzed} lines.`,
     });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case "u":
+            e.preventDefault();
+            setLeftPanelOpen(true);
+            break;
+          case "r":
+            e.preventDefault();
+            if (documentContent.trim()) {
+              startAnalysis();
+            }
+            break;
+          case "f":
+            e.preventDefault();
+            const searchInput = document.querySelector(
+              "[data-search-input]"
+            ) as HTMLInputElement;
+            searchInput?.focus();
+            break;
+        }
+      }
+      if (e.key === "Escape") {
+        setLeftPanelOpen(false);
+        setRightPanelOpen(false);
+        setSelectedViolation(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [documentContent, startAnalysis]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredViolations(violations);
+    } else {
+      const filtered = violations.filter(
+        (violation) =>
+          violation.violatedText
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          violation.category
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          violation.regulatorySource.law
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+      );
+      setFilteredViolations(filtered);
+    }
+  }, [violations, searchQuery]);
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const text = await file.text();
+      setDocumentContent(text);
+      setViolations([]);
+      setAnalysisSummary(null);
+      setSelectedViolation(null);
+      toast({
+        title: "File uploaded successfully",
+        description: `${file.name} is ready for analysis.`,
+      });
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error reading the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTextInput = (text: string) => {
+    setDocumentContent(text);
+    setViolations([]);
+    setAnalysisSummary(null);
+    setSelectedViolation(null);
   };
 
   const handleViolationClick = (violation: ViolationData) => {
