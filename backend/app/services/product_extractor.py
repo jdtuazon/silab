@@ -416,18 +416,86 @@ class ProductExtractor:
 
         raise ValueError("No text could be extracted from the PDF")
 
+    def _extract_product_name(self, raw_text: str) -> Optional[Tuple[str, float]]:
+        """
+        Heuristic product name extraction using early lines and signal scoring.
+        Scoring features:
+        - Position: earlier lines score higher
+        - Capitalization: Title Case or ALL CAPS preferred
+        - Length: 4..80 chars preferred
+        - Signal words around: 'card', 'loan', 'account', 'product' in nearby lines
+        - Penalize generic/legal/header lines
+        """
+        lines = [ln.strip() for ln in raw_text.split('\n')]
+        # Consider only the first N lines to avoid body noise
+        candidate_window = lines[:50]
+
+        def alpha_ratio(s: str) -> float:
+            letters = sum(c.isalpha() for c in s)
+            return letters / max(1, len(s))
+
+        def is_generic(s: str) -> bool:
+            s_low = s.lower()
+            generic_terms = [
+                'table of contents', 'confidential', 'copyright', 'all rights reserved',
+                'terms and conditions', 'page ', 'section ', 'rev.', 'version', 'updated',
+                'applicant', 'application form', 'address', 'contact', 'email', 'website'
+            ]
+            return any(term in s_low for term in generic_terms)
+
+        type_terms = ['card', 'loan', 'account', 'product', 'credit', 'savings', 'microfinance']
+        best = None
+        best_score = 0.0
+        for idx, ln in enumerate(candidate_window):
+            if len(ln) < 4 or len(ln) > 120:
+                continue
+            if alpha_ratio(ln) < 0.5:
+                continue
+            if is_generic(ln):
+                continue
+            # base
+            score = 1.0
+            # earlier line bonus
+            score += max(0.0, 1.0 - (idx / 50.0))
+            # capitalization bonus
+            if ln.isupper():
+                score += 0.5
+            elif ln.istitle():
+                score += 0.4
+            # type proximity bonus (look at this and next 2 lines)
+            neighborhood = ' '.join(candidate_window[idx:idx+3]).lower()
+            if any(t in neighborhood for t in type_terms):
+                score += 0.4
+            # punctuation penalty if ends with colon/dot (likely a label)
+            if ln.endswith(':') or ln.endswith('.'):
+                score -= 0.2
+            if score > best_score:
+                best_score = score
+                best = ln
+
+        if best:
+            # normalize whitespace but keep case
+            name = re.sub(r'\s+', ' ', best).strip()
+            # map score into 0..1 range roughly
+            confidence = min(1.0, 0.5 + (best_score / 3.0))
+            return name, confidence
+        return None
+
     def extract_product_info(self, file_contents: bytes) -> Dict[str, Any]:
         """Extract product information from PDF"""
         # Extract text and tables
-        text, tables = self._extract_text_from_pdf(file_contents)
-        if not text:
+        raw_text, tables = self._extract_text_from_pdf(file_contents)
+        if not raw_text:
             raise ValueError("Could not extract text from PDF")
 
-        # Preprocess text
-        text = self._preprocess_text(text)
+        # Attempt robust name extraction BEFORE aggressive preprocessing
+        name_guess = self._extract_product_name(raw_text)
+
+        # Preprocess text (normalize spacing/dashes for downstream regex)
+        text = self._preprocess_text(raw_text)
 
         # Split into sections
-        sections = text.split('\n\n')
+        sections = raw_text.split('\n\n') if '\n\n' in raw_text else text.split('\n\n')
         product_info = {
             "confidence_scores": {},
             "extracted_data": {}  # Store all extracted data before filtering
@@ -440,21 +508,27 @@ class ProductExtractor:
         logger.info(f"Detected template: {template_type} with confidence {template_confidence}")
         logger.info(f"Detected languages: {languages}")
 
-        # Extract product name with improved matching
-        for section in sections:
-            name_matches = [
-                (r'product\s+name:?\s*(.+)', 0.9),
-                (r'name\s+of\s+product:?\s*(.+)', 0.9),
-                (r'(.*?)\s*product\s*$', 0.7),
-            ]
-            for pattern, confidence in name_matches:
-                name_match = re.search(pattern, section, re.IGNORECASE)
-                if name_match:
-                    name = self._preprocess_text(name_match.group(1))
-                    if len(name) > 3:  # Basic validation
-                        product_info['extracted_data']['name'] = name
-                        product_info['confidence_scores']['name'] = confidence
-                        break
+        # Extract product name: prefer heuristic first, fall back to labeled patterns
+        if name_guess:
+            product_info['extracted_data']['name'] = name_guess[0]
+            product_info['confidence_scores']['name'] = name_guess[1]
+        else:
+            for section in sections:
+                name_matches = [
+                    (r'product\s+name:?\s*(.+)', 0.85),
+                    (r'name\s+of\s+product:?\s*(.+)', 0.85),
+                    (r'^(?!table of contents)([A-Z][A-Za-z0-9\-\s]{3,80})$', 0.65),
+                ]
+                for pattern, confidence in name_matches:
+                    name_match = re.search(pattern, section.strip(), re.IGNORECASE | re.MULTILINE)
+                    if name_match:
+                        name = self._preprocess_text(name_match.group(1))
+                        if len(name) > 3:
+                            product_info['extracted_data']['name'] = name
+                            product_info['confidence_scores']['name'] = confidence
+                            break
+                if 'name' in product_info['extracted_data']:
+                    break
 
         # Determine product type with confidence
         product_type, type_confidence = self._get_product_type(text)

@@ -4,6 +4,8 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel, Field
 from ..services.product_extractor import ProductExtractor
+from ..services.llm_extractor import LLMExtractor
+from ..services.similar_products import build_sample_similar_products, rank_similar_products
 from ..models.product import (
     Product, ProductType, ComplianceStatus, RewardsType,
     TargetSegment, DistributionChannel, LoanPurpose,
@@ -12,8 +14,107 @@ from ..models.product import (
     CreditCardAttributes, PersonalLoanAttributes,
     MicrofinanceLoanAttributes, SavingsAccountAttributes
 )
-
+from ..models.product_text_file import ProductTextFile
+from ..models.schemas import (
+    SynMarketRequest,
+    SynMarketResponse,
+    MarketOpportunitySection,
+)
+from ..services.synmarket_service import generate_synmarket as synmarket_pipeline
 router = APIRouter(prefix="/products", tags=["products"])
+class ExtractHintsResponse(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    amount_range: Optional[dict] = None
+    tenure_range: Optional[dict] = None
+    interest_rate: Optional[dict] = None
+    collateral_required: Optional[bool] = None
+    target_segments: Optional[List[str]] = None
+    compliance_status: Optional[str] = None
+
+@router.post("/{product_id}/extract-hints", response_model=ExtractHintsResponse, tags=["products"])
+async def extract_hints_for_product(product_id: str, file: UploadFile = File(...)):
+    """Return lightweight structured hints from a PDF without storing anything."""
+    try:
+        product = Product.objects(id=product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Empty file")
+
+        # 1) Try heuristic extractor
+        extractor = ProductExtractor()
+        info = extractor.extract_product_info(contents)
+        # 2) If name is missing or confidence low, optionally call LLM if configured
+        try:
+            missing_core = not info.get('name') or not info.get('type')
+            llm = LLMExtractor()
+            if missing_core and llm.is_configured():
+                raw_text, _ = extractor._extract_text_from_pdf(contents)
+                llm_result = await llm.extract(raw_text)
+                # Merge conservatively: prefer heuristic non-null values
+                def choose(a, b):
+                    return a if a not in (None, '', []) else b
+                merged = {
+                    'name': choose(info.get('name'), llm_result.get('name')),
+                    'type': choose(info.get('type'), llm_result.get('type')),
+                    'description': choose(info.get('description'), llm_result.get('description')),
+                    'amount_range': choose(info.get('amount_range'), llm_result.get('amount_range')),
+                    'tenure_range': choose(info.get('tenure_range'), llm_result.get('tenure_range')),
+                    'interest_rate': choose(info.get('interest_rate'), llm_result.get('interest_rate')),
+                    'collateral_required': choose(info.get('collateral_required'), llm_result.get('collateral_required')),
+                    'target_segments': choose(info.get('target_segments'), llm_result.get('target_segments')),
+                    'compliance_status': choose(info.get('compliance_status'), llm_result.get('compliance_status')),
+                }
+                info = merged
+        except Exception:
+            # Ignore LLM errors; return heuristic result
+            pass
+
+        def serialize_value(value):
+            try:
+                return value.value
+            except Exception:
+                return value
+
+        return ExtractHintsResponse(
+            name=info.get('name'),
+            type=serialize_value(info.get('type')) if info.get('type') else None,
+            description=info.get('description'),
+            amount_range=info.get('amount_range'),
+            tenure_range=info.get('tenure_range'),
+            interest_rate=info.get('interest_rate'),
+            collateral_required=info.get('collateral_required'),
+            target_segments=info.get('target_segments'),
+            compliance_status=serialize_value(info.get('compliance_status')) if info.get('compliance_status') else None,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-synmarket", response_model=SynMarketResponse, tags=["products"])
+async def generate_synmarket(payload: SynMarketRequest):
+    """
+    Generate Market Opportunity, Similar Products, Virtual Persona, and SiLab Insights
+    in one JSON response using an LLM. Returns strictly-typed JSON per schema.
+    """
+    try:
+        try:
+            return await synmarket_pipeline(payload)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+ 
+
 
 # Pydantic models for request/response
 class AmountRangeSchema(BaseModel):
@@ -73,7 +174,7 @@ class ProductSchema(BaseModel):
     name: str = Field(..., description="Name of the product")
     type: ProductType = Field(..., description="Type of financial product")
     description: str = Field(..., description="Product description")
-    target_personas: List[str] = Field(..., description="Target customer personas")
+    target_personas: List[str] = Field(..., description="Product tags/personas")
     compliance_status: ComplianceStatus = Field(..., description="Current compliance status")
     credit_card_attributes: Optional[CreditCardAttributesSchema] = None
     personal_loan_attributes: Optional[PersonalLoanAttributesSchema] = None
@@ -305,6 +406,133 @@ async def get_product(product_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/extract-text", response_model=dict, tags=["products"])
+async def extract_product_text(file: UploadFile = File(...)):
+    """
+    Accept a PDF and return a clean, human-readable text representation of the product
+    (no binary storage). Example output lines like:
+    "Product Title:\nPremium Rewards Card"
+    "Product Type:\nCreditCard"
+    "Description:\n..."
+    """
+    try:
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Empty file")
+
+        extractor = ProductExtractor()
+        # Extract raw text as-is (no restructuring)
+        text_output, _ = extractor._extract_text_from_pdf(contents)
+        return {
+            "filename": file.filename,
+            "text": text_output,
+            "metadata": {},
+            "confidence": {},
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+
+@router.post("/{product_id}/files", tags=["products"], response_model=dict)
+async def create_product_text_file(product_id: str, file: UploadFile = File(...)):
+    """Upload a PDF, extract text summary, and store as a text-only product file linked to the product."""
+    try:
+        product = Product.objects(id=product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Empty file")
+
+        extractor = ProductExtractor()
+        # Extract raw text as-is (no restructuring)
+        text_output, _ = extractor._extract_text_from_pdf(contents)
+
+        def save_doc():
+            doc = ProductTextFile(
+                product=product,
+                filename=file.filename,
+                content_type=file.content_type or "application/pdf",
+                size=len(contents),
+                text=text_output,
+            )
+            doc.save()
+            return doc
+
+        with ThreadPoolExecutor() as executor:
+            saved = await asyncio.get_event_loop().run_in_executor(executor, save_doc)
+
+        return {
+            "id": str(saved.id),
+            "product_id": str(product.id),
+            "filename": saved.filename,
+            "content_type": saved.content_type,
+            "size": saved.size,
+            "uploaded_at": saved.uploaded_at.isoformat() if saved.uploaded_at else None,
+            "text": saved.text,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{product_id}/files", tags=["products"], response_model=List[dict])
+async def list_product_text_files(product_id: str):
+    """List text-only product files for a product (metadata only)."""
+    try:
+        product = Product.objects(id=product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        def fetch_docs():
+            docs = ProductTextFile.objects(product=product).order_by("-uploaded_at")
+            return [
+                {
+                    "id": str(d.id),
+                    "filename": d.filename,
+                    "size": d.size,
+                    "uploaded_at": d.uploaded_at.isoformat() if d.uploaded_at else None,
+                }
+                for d in docs
+            ]
+
+        with ThreadPoolExecutor() as executor:
+            result = await asyncio.get_event_loop().run_in_executor(executor, fetch_docs)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/files/{file_id}", tags=["products"], response_model=dict)
+async def get_product_text_file(file_id: str):
+    """Get a single text-only product file (full text)."""
+    try:
+        def fetch_doc():
+            return ProductTextFile.objects(id=file_id).first()
+
+        with ThreadPoolExecutor() as executor:
+            doc = await asyncio.get_event_loop().run_in_executor(executor, fetch_doc)
+
+        if not doc:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return {
+            "id": str(doc.id),
+            "filename": doc.filename,
+            "content_type": doc.content_type,
+            "size": doc.size,
+            "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
+            "text": doc.text,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{product_id}", response_model=dict)
 async def update_product(product_id: str, product_update: ProductSchema):
